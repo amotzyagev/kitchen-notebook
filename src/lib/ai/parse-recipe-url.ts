@@ -112,13 +112,12 @@ function mapSchemaOrgToExtraction(recipe: SchemaOrgRecipe): Omit<AIRecipeExtract
   return { title, ingredients, instructions, notes, tags: [], original_text: originalText }
 }
 
-async function extractWithReadability(html: string, url: string): Promise<string | null> {
-  const { JSDOM } = await import('jsdom')
-  const { Readability } = await import('@mozilla/readability')
-  const dom = new JSDOM(html, { url })
-  const reader = new Readability(dom.window.document)
-  const article = reader.parse()
-  return article?.textContent?.trim() || null
+function extractTextWithCheerio(html: string): string | null {
+  const $ = cheerio.load(html)
+  // Remove non-content elements
+  $('script, style, nav, footer, header, iframe, noscript').remove()
+  const text = $('body').text().replace(/\s+/g, ' ').trim()
+  return text.length > 100 ? text : null
 }
 
 function cleanMarkdown(text: string): string {
@@ -254,13 +253,13 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
       }
     }
 
-    // Step 2b: Try Readability + AI from direct HTML
-    const cleanText = await extractWithReadability(html, url)
+    // Step 2b: Try cheerio text extraction + AI from direct HTML
+    const cleanText = extractTextWithCheerio(html)
     if (cleanText && cleanText.length > 100) {
-      console.log('[parse] Using Readability text, length:', cleanText.length)
+      console.log('[parse] Using cheerio text, length:', cleanText.length)
       return extractWithAI(cleanText)
     }
-    console.log('[parse] Readability extraction too short or empty, trying Jina')
+    console.log('[parse] Cheerio extraction too short or empty, trying Jina')
   }
 
   // Step 3: Fallback to Jina Reader (handles bot protection, JS rendering)
