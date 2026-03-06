@@ -1,6 +1,4 @@
 import * as cheerio from 'cheerio'
-import puppeteer from 'puppeteer-core'
-import chromium from '@sparticuz/chromium'
 import { anthropic } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 
@@ -160,13 +158,13 @@ async function fetchSimple(url: string): Promise<string | null> {
     })
     console.log('[fetch] Simple fetch status:', response.status)
     if (response.status === 403 || response.status === 401) {
-      console.log('[fetch] Blocked by server, will try browser fallback')
+      console.log('[fetch] Blocked by server, will try Jina Reader')
       return null
     }
     const html = await response.text()
     console.log('[fetch] HTML length:', html.length)
     if (html.length < 500) {
-      console.log('[fetch] HTML too short, will try browser fallback')
+      console.log('[fetch] HTML too short, will try Jina Reader')
       return null
     }
     return html
@@ -178,65 +176,61 @@ async function fetchSimple(url: string): Promise<string | null> {
   }
 }
 
-async function fetchWithBrowser(url: string): Promise<string> {
-  console.log('[fetch] Launching headless browser for:', url)
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: { width: 1280, height: 720 },
-    executablePath: await chromium.executablePath(),
-    headless: true,
-  })
+async function fetchWithJina(url: string): Promise<string> {
+  console.log('[fetch] Trying Jina Reader for:', url)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
   try {
-    const page = await browser.newPage()
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    )
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 })
-    const html = await page.content()
-    console.log('[fetch] Browser fetched HTML length:', html.length)
-    return html
-  } catch (err) {
-    console.error('[fetch] Browser fetch error:', err instanceof Error ? err.message : err)
-    throw err
-  } finally {
-    await browser.close()
-  }
-}
-
-function extractRecipeFromHtml(html: string, url: string): Promise<AIRecipeExtraction> | AIRecipeExtraction | null {
-  // Try JSON-LD first
-  const jsonLdRecipe = extractJsonLdRecipe(html)
-  if (jsonLdRecipe && jsonLdRecipe.name) {
-    const mapped = mapSchemaOrgToExtraction(jsonLdRecipe)
-    return {
-      ...mapped,
-      confidence: 'high',
-      is_recipe: true,
+    const response = await fetch(`https://r.jina.ai/${url}`, {
+      signal: controller.signal,
+      headers: {
+        Accept: 'text/markdown',
+        'X-Return-Format': 'markdown',
+      },
+    })
+    console.log('[fetch] Jina status:', response.status)
+    if (!response.ok) {
+      throw new Error(`Jina Reader returned ${response.status}`)
     }
+    const markdown = await response.text()
+    console.log('[fetch] Jina markdown length:', markdown.length)
+    if (markdown.length < 100) {
+      throw new Error('Jina Reader returned too little content')
+    }
+    return markdown
+  } finally {
+    clearTimeout(timeout)
   }
-  return null
 }
 
 export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
-  // Step 1: Try simple fetch first (fast, no overhead)
-  let html = await fetchSimple(url)
+  // Step 1: Try simple fetch first (fast, free, no external dependency)
+  const html = await fetchSimple(url)
 
-  // Step 2: If simple fetch failed, use headless browser
-  if (!html) {
-    html = await fetchWithBrowser(url)
+  if (html) {
+    // Step 2a: Try JSON-LD extraction from direct HTML
+    const jsonLdRecipe = extractJsonLdRecipe(html)
+    if (jsonLdRecipe && jsonLdRecipe.name) {
+      console.log('[parse] Found JSON-LD recipe:', jsonLdRecipe.name)
+      const mapped = mapSchemaOrgToExtraction(jsonLdRecipe)
+      return {
+        ...mapped,
+        confidence: 'high',
+        is_recipe: true,
+      }
+    }
+
+    // Step 2b: Try Readability + AI from direct HTML
+    const cleanText = await extractWithReadability(html, url)
+    if (cleanText && cleanText.length > 100) {
+      console.log('[parse] Using Readability text, length:', cleanText.length)
+      return extractWithAI(cleanText)
+    }
+    console.log('[parse] Readability extraction too short or empty, trying Jina')
   }
 
-  // Step 3: Try JSON-LD extraction
-  const jsonLdResult = extractRecipeFromHtml(html, url)
-  if (jsonLdResult) {
-    return jsonLdResult instanceof Promise ? await jsonLdResult : jsonLdResult
-  }
-
-  // Step 4: Fallback to Readability + AI
-  const cleanText = await extractWithReadability(html, url)
-  if (!cleanText) {
-    throw new Error('Could not extract content from page')
-  }
-
-  return extractWithAI(cleanText)
+  // Step 3: Fallback to Jina Reader (handles bot protection, JS rendering)
+  const markdown = await fetchWithJina(url)
+  console.log('[parse] Using Jina markdown for AI extraction')
+  return extractWithAI(markdown)
 }
