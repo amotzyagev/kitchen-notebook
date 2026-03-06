@@ -144,6 +144,7 @@ async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
 }
 
 async function fetchSimple(url: string): Promise<string | null> {
+  console.log('[fetch] Trying simple fetch for:', url)
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 10000)
   try {
@@ -157,14 +158,20 @@ async function fetchSimple(url: string): Promise<string | null> {
       },
       redirect: 'follow',
     })
+    console.log('[fetch] Simple fetch status:', response.status)
     if (response.status === 403 || response.status === 401) {
+      console.log('[fetch] Blocked by server, will try browser fallback')
       return null
     }
     const html = await response.text()
-    // If the page is too short, it's likely a bot protection page
-    if (html.length < 500) return null
+    console.log('[fetch] HTML length:', html.length)
+    if (html.length < 500) {
+      console.log('[fetch] HTML too short, will try browser fallback')
+      return null
+    }
     return html
-  } catch {
+  } catch (err) {
+    console.error('[fetch] Simple fetch error:', err instanceof Error ? err.message : err)
     return null
   } finally {
     clearTimeout(timeout)
@@ -172,6 +179,7 @@ async function fetchSimple(url: string): Promise<string | null> {
 }
 
 async function fetchWithBrowser(url: string): Promise<string> {
+  console.log('[fetch] Launching headless browser for:', url)
   const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: { width: 1280, height: 720 },
@@ -184,7 +192,12 @@ async function fetchWithBrowser(url: string): Promise<string> {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     )
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 })
-    return await page.content()
+    const html = await page.content()
+    console.log('[fetch] Browser fetched HTML length:', html.length)
+    return html
+  } catch (err) {
+    console.error('[fetch] Browser fetch error:', err instanceof Error ? err.message : err)
+    throw err
   } finally {
     await browser.close()
   }
