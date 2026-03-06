@@ -25,6 +25,8 @@ function sourceIcon(type: Recipe['source_type']): string {
       return '\uD83D\uDD17'
     case 'image':
       return '\uD83D\uDCF7'
+    case 'import':
+      return '\uD83D\uDCE5'
     case 'manual':
     default:
       return '\uD83D\uDCDD'

@@ -141,7 +141,7 @@ function cleanMarkdown(text: string): string {
   return cleaned.join('\n').trim()
 }
 
-async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
+export async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
   const cleaned = cleanMarkdown(text)
   const truncatedText = cleaned.slice(0, 30000)
   console.log('[ai] Sending text to AI, length:', truncatedText.length)

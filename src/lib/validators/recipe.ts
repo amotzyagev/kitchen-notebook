@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const sourceTypeSchema = z.enum(['manual', 'link', 'image']);
+export const sourceTypeSchema = z.enum(['manual', 'link', 'image', 'import']);
 
 // Form validation (user input)
 export const recipeFormSchema = z.object({

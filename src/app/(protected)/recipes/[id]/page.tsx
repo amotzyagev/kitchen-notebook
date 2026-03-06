@@ -16,12 +16,14 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function sourceLabel(type: 'manual' | 'link' | 'image'): string {
+function sourceLabel(type: string): string {
   switch (type) {
     case 'link':
       return '\uD83D\uDD17 קישור'
     case 'image':
       return '\uD83D\uDCF7 תמונה'
+    case 'import':
+      return '\uD83D\uDCE5 ייבוא'
     case 'manual':
     default:
       return '\uD83D\uDCDD ידני'
