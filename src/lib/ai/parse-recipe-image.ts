@@ -19,6 +19,11 @@ const SAVE_RECIPE_TOOL = {
         description: 'Ordered list of preparation steps in Hebrew',
       },
       notes: { type: 'string', description: 'Additional notes, tips, or serving suggestions in Hebrew' },
+      tags: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Category tags for the recipe in Hebrew (e.g., קינוח, אפייה, מאפים, סלט, מרק, בשרי, צמחוני, טבעוני, ארוחת בוקר)',
+      },
       original_text: { type: 'string', description: 'The raw OCR text extracted from the image before translation' },
       confidence: {
         type: 'string',
@@ -30,7 +35,7 @@ const SAVE_RECIPE_TOOL = {
         description: 'Whether the image contains a recipe',
       },
     },
-    required: ['title', 'ingredients', 'instructions', 'notes', 'original_text', 'confidence', 'is_recipe'],
+    required: ['title', 'ingredients', 'instructions', 'notes', 'tags', 'original_text', 'confidence', 'is_recipe'],
   },
 }
 

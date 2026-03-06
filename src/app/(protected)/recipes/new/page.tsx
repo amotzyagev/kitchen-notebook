@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { RecipeForm } from '@/components/recipe/recipe-form'
 import { PhotoUpload } from '@/components/recipe/photo-upload'
 import { UrlInput } from '@/components/recipe/url-input'
+import { TextInput } from '@/components/recipe/text-input'
 import { FileImport } from '@/components/recipe/file-import'
 import { useRecipes } from '@/hooks/use-recipes'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
@@ -21,6 +22,11 @@ export default function NewRecipePage() {
   const [extractedData, setExtractedData] = useState<AIRecipeExtraction | null>(null)
   const [sourceUrl, setSourceUrl] = useState<string | undefined>()
   const [showForm, setShowForm] = useState(true)
+
+  const handleTextExtracted = useCallback((data: AIRecipeExtraction) => {
+    setExtractedData(data)
+    setShowForm(true)
+  }, [])
 
   const handlePhotoExtracted = useCallback((data: AIRecipeExtraction) => {
     setExtractedData(data)
@@ -73,7 +79,7 @@ export default function NewRecipePage() {
         ingredients: extractedData.ingredients,
         instructions: extractedData.instructions,
         notes: extractedData.notes,
-        tags: [],
+        tags: extractedData.tags ?? [],
       }
     : undefined
 
@@ -87,9 +93,9 @@ export default function NewRecipePage() {
         onValueChange={(val) => {
           setActiveTab(val)
           // Reset extracted data when switching tabs
+          setExtractedData(null)
+          setSourceUrl(undefined)
           if (val === 'manual') {
-            setExtractedData(null)
-            setSourceUrl(undefined)
             setShowForm(true)
           } else {
             setShowForm(false)
@@ -98,6 +104,7 @@ export default function NewRecipePage() {
       >
         <TabsList>
           <TabsTrigger value="manual">ידני</TabsTrigger>
+          <TabsTrigger value="text">טקסט חופשי</TabsTrigger>
           <TabsTrigger value="photo">צילום</TabsTrigger>
           <TabsTrigger value="link">קישור</TabsTrigger>
           <TabsTrigger value="import">ייבוא</TabsTrigger>
@@ -109,6 +116,26 @@ export default function NewRecipePage() {
             isLoading={isLoading}
             sourceType="manual"
           />
+        </TabsContent>
+
+        <TabsContent value="text">
+          {!showForm || !extractedData ? (
+            <TextInput onExtracted={handleTextExtracted} />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                המתכון חולץ בהצלחה. בדוק ותקן לפי הצורך:
+              </p>
+              <RecipeForm
+                key={`text-${extractedData.title}`}
+                onSubmit={handleSubmit}
+                defaultValues={defaultValues}
+                isLoading={isLoading}
+                sourceType="manual"
+                originalText={extractedData.original_text}
+              />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="photo">

@@ -27,6 +27,11 @@ const SAVE_RECIPE_TOOL = {
         description: 'Ordered list of preparation steps',
       },
       notes: { type: 'string', description: 'Additional notes or tips' },
+      tags: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Category tags for the recipe in Hebrew (e.g., קינוח, אפייה, מאפים, סלט, מרק, בשרי, צמחוני, טבעוני, ארוחת בוקר)',
+      },
       original_text: { type: 'string', description: 'The original extracted text' },
       confidence: {
         type: 'string',
@@ -38,7 +43,7 @@ const SAVE_RECIPE_TOOL = {
         description: 'Whether the content contains a recipe',
       },
     },
-    required: ['title', 'ingredients', 'instructions', 'notes', 'original_text', 'confidence', 'is_recipe'],
+    required: ['title', 'ingredients', 'instructions', 'notes', 'tags', 'original_text', 'confidence', 'is_recipe'],
   },
 }
 
@@ -104,7 +109,7 @@ function mapSchemaOrgToExtraction(recipe: SchemaOrgRecipe): Omit<AIRecipeExtract
     ...instructions,
   ].join('\n')
 
-  return { title, ingredients, instructions, notes, original_text: originalText }
+  return { title, ingredients, instructions, notes, tags: [], original_text: originalText }
 }
 
 async function extractWithReadability(html: string, url: string): Promise<string | null> {
@@ -157,7 +162,7 @@ If the recipe has multiple stages or components (e.g., sauce, dough, filling, sa
     messages: [
       {
         role: 'user',
-        content: `Extract the recipe from this text. Use the save_recipe tool to return the structured data.\n\n${truncatedText}`,
+        content: `Extract the recipe from this text. Assign relevant category tags in Hebrew (e.g., קינוח, אפייה, סלט, מרק, בשרי, צמחוני). Use the save_recipe tool to return the structured data.\n\n${truncatedText}`,
       },
     ],
   })

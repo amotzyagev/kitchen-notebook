@@ -103,7 +103,7 @@ export function FileImport() {
           ingredients: extraction.ingredients,
           instructions: extraction.instructions,
           notes: extraction.notes || undefined,
-          tags: [],
+          tags: extraction.tags ?? [],
           source_type: 'import',
           original_text: extraction.original_text || undefined,
         })

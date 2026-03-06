@@ -6,6 +6,7 @@ export const aiRecipeExtractionSchema = z.object({
   ingredients: z.array(z.string()),
   instructions: z.array(z.string()),
   notes: z.string(),
+  tags: z.array(z.string()).default([]),
   original_text: z.string(),
   confidence: z.enum(['high', 'medium', 'low']),
   is_recipe: z.boolean(),
