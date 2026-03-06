@@ -64,7 +64,21 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      if (!profile || !profile.approved) {
+      if (!profile) {
+        // No profile yet (existing user before approval feature) — create one in background
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+        fetch(`${appUrl}/api/auth/on-signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, email: user.email }),
+        }).catch(() => {})
+        // Redirect to pending while profile is created
+        const url = request.nextUrl.clone()
+        url.pathname = '/pending-approval'
+        return NextResponse.redirect(url)
+      }
+
+      if (!profile.approved) {
         const url = request.nextUrl.clone()
         url.pathname = '/pending-approval'
         return NextResponse.redirect(url)
