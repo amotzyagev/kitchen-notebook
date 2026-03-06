@@ -4,7 +4,7 @@ import { parseUrlRequestSchema } from '@/lib/validators/api'
 import { parseRecipeUrl } from '@/lib/ai/parse-recipe-url'
 import { translateRecipe } from '@/lib/ai/translate'
 
-export const maxDuration = 30
+export const maxDuration = 60
 
 export async function POST(request: Request) {
   try {

@@ -34,9 +34,23 @@ const SAVE_TRANSLATED_RECIPE_TOOL = {
   },
 }
 
+function isHebrew(text: string): boolean {
+  const hebrewChars = text.match(/[\u0590-\u05FF]/g) || []
+  const latinChars = text.match(/[a-zA-Z]/g) || []
+  return hebrewChars.length > latinChars.length
+}
+
 export async function translateRecipe(extraction: AIRecipeExtraction): Promise<AIRecipeExtraction> {
+  // Skip translation if content is already in Hebrew
+  const sampleText = [extraction.title, ...extraction.ingredients.slice(0, 3)].join(' ')
+  if (isHebrew(sampleText)) {
+    console.log('[translate] Content already in Hebrew, skipping translation')
+    return extraction
+  }
+
+  console.log('[translate] Translating to Hebrew...')
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     system: `You are a translation assistant specializing in recipe translation to Hebrew.
 Translate all recipe fields (title, ingredients, instructions, notes) to Hebrew.
