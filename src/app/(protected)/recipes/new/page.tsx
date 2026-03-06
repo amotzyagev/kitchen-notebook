@@ -56,8 +56,9 @@ export default function NewRecipePage() {
         })
         router.push(`/recipes/${recipe.id}`)
       } catch (error) {
-        console.error('Failed to save recipe:', error)
-        alert('שגיאה בשמירת המתכון. אנא נסה שוב.')
+        const errMsg = error instanceof Error ? error.message : JSON.stringify(error)
+        console.error('Failed to save recipe:', errMsg, error)
+        alert(`שגיאה בשמירת המתכון: ${errMsg}`)
       } finally {
         setIsLoading(false)
       }
