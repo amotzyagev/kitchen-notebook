@@ -116,13 +116,40 @@ async function extractWithReadability(html: string, url: string): Promise<string
   return article?.textContent?.trim() || null
 }
 
+function cleanMarkdown(text: string): string {
+  // Remove common boilerplate patterns from Jina Reader output
+  const lines = text.split('\n')
+  const cleaned: string[] = []
+  let skipBlock = false
+
+  for (const line of lines) {
+    // Skip cookie consent, navigation, and marketing blocks
+    if (/^(Manage Consent|To provide the best experiences|Functional|Preferences|Statistics|Marketing|The technical storage|Accept Deny|Save preferences)/i.test(line.trim())) {
+      skipBlock = true
+      continue
+    }
+    // Skip image-only lines
+    if (/^\[!\[Image \d+/.test(line.trim()) && !line.includes('חומרים') && !line.includes('הכנה')) {
+      continue
+    }
+    if (skipBlock) {
+      if (line.trim() === '' || line.startsWith('[') || line.startsWith('- [')) continue
+      skipBlock = false
+    }
+    cleaned.push(line)
+  }
+  return cleaned.join('\n').trim()
+}
+
 async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
-  const truncatedText = text.slice(0, 10000)
+  const cleaned = cleanMarkdown(text)
+  const truncatedText = cleaned.slice(0, 30000)
+  console.log('[ai] Sending text to AI, length:', truncatedText.length)
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
-    system: `You are a recipe extraction assistant. Extract structured recipe data from the provided text. Identify the title, ingredients, instructions, and any notes.`,
+    max_tokens: 4096,
+    system: `You are a recipe extraction assistant. Extract structured recipe data from the provided text. The text may contain blog content, stories, and other non-recipe text — focus on finding and extracting ONLY the recipe parts: title, ingredients list, and preparation instructions. Look for sections labeled with words like "חומרים" (ingredients), "הכנה" (preparation), or similar markers.`,
     tools: [SAVE_RECIPE_TOOL],
     tool_choice: { type: 'any' },
     messages: [
