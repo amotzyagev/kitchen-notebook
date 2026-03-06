@@ -27,7 +27,7 @@ function statusIcon(status: FileStatus) {
   }
 }
 
-export default function ImportPage() {
+export function FileImport() {
   const [files, setFiles] = useState<FileEntry[]>([])
   const [importing, setImporting] = useState(false)
   const [done, setDone] = useState(false)
@@ -43,7 +43,6 @@ export default function ImportPage() {
     }))
     setFiles(prev => [...prev, ...entries])
     setDone(false)
-    // Reset input so the same files can be selected again
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -61,7 +60,6 @@ export default function ImportPage() {
       const reader = new FileReader()
       reader.onload = () => {
         const result = reader.result as string
-        // Remove data URL prefix (e.g., "data:text/plain;base64,")
         const base64 = result.split(',')[1]
         resolve(base64)
       }
@@ -77,7 +75,6 @@ export default function ImportPage() {
     for (let i = 0; i < files.length; i++) {
       if (files[i].status === 'success') continue
 
-      // Mark as processing
       setFiles(prev => prev.map((f, idx) =>
         idx === i ? { ...f, status: 'processing' as const, error: undefined } : f
       ))
@@ -101,7 +98,6 @@ export default function ImportPage() {
 
         const extraction: AIRecipeExtraction = await response.json()
 
-        // Auto-save recipe
         await createRecipe({
           title: extraction.title,
           ingredients: extraction.ingredients,
@@ -134,17 +130,11 @@ export default function ImportPage() {
   const canImport = hasFiles && !importing && (pendingCount > 0 || failedCount > 0)
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6" dir="rtl">
-      <Link href="/recipes" className="text-sm text-muted-foreground hover:text-foreground">
-        &larr; חזרה למתכונים
-      </Link>
-
-      <h1 className="text-2xl font-bold">ייבוא מתכונים</h1>
-      <p className="text-muted-foreground">
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
         בחר קבצי מתכונים מהמחשב. נתמכים: טקסט, Word, תמונות.
       </p>
 
-      {/* File selection */}
       <div className="flex gap-3 flex-wrap">
         <Button
           variant="outline"
@@ -168,7 +158,6 @@ export default function ImportPage() {
         />
       </div>
 
-      {/* File list */}
       {hasFiles && (
         <div className="space-y-2">
           {files.map((entry, i) => (
@@ -205,14 +194,12 @@ export default function ImportPage() {
         </div>
       )}
 
-      {/* Import button */}
       {canImport && (
         <Button onClick={startImport} className="w-full">
           ייבא {pendingCount + failedCount} קבצים
         </Button>
       )}
 
-      {/* Summary */}
       {done && (
         <Card>
           <CardContent className="p-4 text-center space-y-2">

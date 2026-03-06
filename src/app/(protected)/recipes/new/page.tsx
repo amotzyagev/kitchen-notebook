@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { RecipeForm } from '@/components/recipe/recipe-form'
 import { PhotoUpload } from '@/components/recipe/photo-upload'
 import { UrlInput } from '@/components/recipe/url-input'
+import { FileImport } from '@/components/recipe/file-import'
 import { useRecipes } from '@/hooks/use-recipes'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 import type { RecipeForm as RecipeFormType } from '@/lib/validators/recipe'
@@ -99,6 +100,7 @@ export default function NewRecipePage() {
           <TabsTrigger value="manual">ידני</TabsTrigger>
           <TabsTrigger value="photo">צילום</TabsTrigger>
           <TabsTrigger value="link">קישור</TabsTrigger>
+          <TabsTrigger value="import">ייבוא</TabsTrigger>
         </TabsList>
 
         <TabsContent value="manual">
@@ -159,6 +161,10 @@ export default function NewRecipePage() {
               />
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="import">
+          <FileImport />
         </TabsContent>
       </Tabs>
     </div>
