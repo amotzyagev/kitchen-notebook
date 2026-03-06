@@ -1,4 +1,6 @@
 import * as cheerio from 'cheerio'
+import puppeteer from 'puppeteer-core'
+import chromium from '@sparticuz/chromium'
 import { anthropic } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 
@@ -141,11 +143,9 @@ async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
   return aiRecipeExtractionSchema.parse(toolUseBlock.input)
 }
 
-export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
+async function fetchSimple(url: string): Promise<string | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 10000)
-
-  let html: string
   try {
     const response = await fetch(url, {
       signal: controller.signal,
@@ -158,13 +158,39 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
       redirect: 'follow',
     })
     if (response.status === 403 || response.status === 401) {
-      throw new Error('האתר חוסם גישה אוטומטית. נסו להעלות צילום מסך של המתכון במקום.')
+      return null
     }
-    html = await response.text()
+    const html = await response.text()
+    // If the page is too short, it's likely a bot protection page
+    if (html.length < 500) return null
+    return html
+  } catch {
+    return null
   } finally {
     clearTimeout(timeout)
   }
+}
 
+async function fetchWithBrowser(url: string): Promise<string> {
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: { width: 1280, height: 720 },
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  })
+  try {
+    const page = await browser.newPage()
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    )
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 })
+    return await page.content()
+  } finally {
+    await browser.close()
+  }
+}
+
+function extractRecipeFromHtml(html: string, url: string): Promise<AIRecipeExtraction> | AIRecipeExtraction | null {
   // Try JSON-LD first
   const jsonLdRecipe = extractJsonLdRecipe(html)
   if (jsonLdRecipe && jsonLdRecipe.name) {
@@ -175,8 +201,25 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
       is_recipe: true,
     }
   }
+  return null
+}
 
-  // Fallback to Readability + AI
+export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
+  // Step 1: Try simple fetch first (fast, no overhead)
+  let html = await fetchSimple(url)
+
+  // Step 2: If simple fetch failed, use headless browser
+  if (!html) {
+    html = await fetchWithBrowser(url)
+  }
+
+  // Step 3: Try JSON-LD extraction
+  const jsonLdResult = extractRecipeFromHtml(html, url)
+  if (jsonLdResult) {
+    return jsonLdResult instanceof Promise ? await jsonLdResult : jsonLdResult
+  }
+
+  // Step 4: Fallback to Readability + AI
   const cleanText = await extractWithReadability(html, url)
   if (!cleanText) {
     throw new Error('Could not extract content from page')
