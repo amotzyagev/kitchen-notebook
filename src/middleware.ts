@@ -44,13 +44,46 @@ export async function middleware(request: NextRequest) {
   }
 
   // Also handle the actual resolved paths under (protected) group
-  if (
-    !user &&
-    (pathname.startsWith('/recipes') || pathname.startsWith('/settings'))
-  ) {
+  const isProtectedRoute = pathname.startsWith('/recipes') || pathname.startsWith('/settings')
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // Check approval status for authenticated users on protected routes
+  if (user && isProtectedRoute) {
+    const adminEmail = process.env.ADMIN_EMAIL
+    const isAdmin = user.email === adminEmail
+
+    if (!isAdmin) {
+      // Check user_profiles for approval
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('approved')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile || !profile.approved) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/pending-approval'
+        return NextResponse.redirect(url)
+      }
+    }
+  }
+
+  // Admin page access — only admin can access
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+    if (user.email !== process.env.ADMIN_EMAIL) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/recipes'
+      return NextResponse.redirect(url)
+    }
   }
 
   // Redirect authenticated users from /login to /recipes

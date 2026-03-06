@@ -59,6 +59,35 @@ export interface Database {
           }
         ]
       }
+      user_profiles: {
+        Row: {
+          id: string
+          email: string
+          approved: boolean
+          created_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          approved?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          approved?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_profiles_id_fkey'
+            columns: ['id']
+            isOneToOne: true
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

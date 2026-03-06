@@ -51,6 +51,16 @@ export function SignupForm() {
       return
     }
 
+    // Create user profile and notify admin
+    const { data: { user: newUser } } = await supabase.auth.getUser()
+    if (newUser) {
+      await fetch('/api/auth/on-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: newUser.id, email: values.email }),
+      }).catch(() => {}) // Don't block signup if notification fails
+    }
+
     setSuccess(true)
     setIsLoading(false)
   }
