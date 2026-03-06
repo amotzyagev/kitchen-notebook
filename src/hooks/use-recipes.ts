@@ -8,15 +8,21 @@ export function useRecipes() {
   const supabase = createClient()
 
   async function createRecipe(data: Omit<RecipeInsert, 'user_id'>): Promise<RecipeRow> {
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('[createRecipe] user:', user?.id, 'authError:', authError?.message)
     if (!user) throw new Error('יש להתחבר כדי לשמור מתכון')
 
+    const insertData = { ...data, user_id: user.id }
+    console.log('[createRecipe] inserting with user_id:', user.id)
     const { data: recipe, error } = await supabase
       .from('recipes')
-      .insert({ ...data, user_id: user.id })
+      .insert(insertData)
       .select()
       .single()
-    if (error) throw error
+    if (error) {
+      console.error('[createRecipe] insert error:', JSON.stringify(error))
+      throw error
+    }
     return recipe
   }
 
