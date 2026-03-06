@@ -40,14 +40,16 @@ export async function parseRecipeImage(
 ): Promise<AIRecipeExtraction> {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
-    system: `You are a recipe extraction assistant. Your task is to:
-1. OCR the image to extract any text
-2. Determine if the image contains a recipe
-3. If it does, extract the recipe details and translate everything to Hebrew
-4. If the text is already in Hebrew, keep it as-is
-5. Set is_recipe to false if the image does not contain a recipe
-6. Always provide the raw OCR text in original_text before any translation`,
+    max_tokens: 4096,
+    system: `You are a recipe extraction assistant specializing in reading recipes from images. Your task is to:
+1. Carefully OCR ALL text visible in the image — pay close attention to every line, ingredient, and instruction
+2. The image may be a screenshot of a social media post (Instagram, Facebook, etc.), a photo of a cookbook page, a handwritten recipe, or any other format containing recipe text
+3. Determine if the image contains a recipe (ingredient lists, cooking instructions, or similar food preparation content)
+4. If it does, extract ALL recipe details completely — do not skip or summarize ingredients or steps
+5. If the text is already in Hebrew, keep it exactly as-is
+6. If the text is in another language, translate everything to Hebrew
+7. Set is_recipe to false ONLY if the image truly does not contain any recipe or food preparation content
+8. Always provide the complete raw OCR text in original_text before any translation`,
     tools: [SAVE_RECIPE_TOOL],
     tool_choice: { type: 'any' },
     messages: [
@@ -64,7 +66,7 @@ export async function parseRecipeImage(
           },
           {
             type: 'text',
-            text: 'Extract the recipe from this image. OCR the text, then translate to Hebrew. Use the save_recipe tool to return the structured data.',
+            text: 'Carefully read ALL text in this image and extract the complete recipe. The image may be a screenshot of a social media post, a cookbook photo, or any other source. OCR every line of text, especially ingredients and instructions. If the text is already in Hebrew, keep it as-is. Use the save_recipe tool to return the structured data.',
           },
         ],
       },

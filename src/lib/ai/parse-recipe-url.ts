@@ -155,7 +155,11 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9,he;q=0.8',
       },
+      redirect: 'follow',
     })
+    if (response.status === 403 || response.status === 401) {
+      throw new Error('האתר חוסם גישה אוטומטית. נסו להעלות צילום מסך של המתכון במקום.')
+    }
     html = await response.text()
   } finally {
     clearTimeout(timeout)

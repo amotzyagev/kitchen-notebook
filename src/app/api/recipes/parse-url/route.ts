@@ -52,8 +52,11 @@ export async function POST(request: Request) {
           { status: 504 }
         )
       }
+      const message = error instanceof Error && error.message.includes('חוסם')
+        ? error.message
+        : 'לא הצלחתי לחלץ מתכון מהדף'
       return NextResponse.json(
-        { error: 'extraction_failed', message: 'לא הצלחתי לחלץ מתכון מהדף' },
+        { error: 'extraction_failed', message },
         { status: 422 }
       )
     }

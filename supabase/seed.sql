@@ -1,5 +1,15 @@
--- NOTE: These recipes use a placeholder user_id.
--- Replace 'YOUR_USER_ID' with an actual user UUID after signing up.
+-- Create a seed test user in Supabase Auth
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email,
+  encrypted_password, email_confirmed_at,
+  created_at, updated_at, confirmation_token, raw_app_meta_data, raw_user_meta_data, is_super_admin
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'seed@example.com',
+  crypt('password123', gen_salt('bf')), now(),
+  now(), now(), '', '{"provider":"email","providers":["email"]}', '{}', false
+);
 
 -- Manual recipe
 INSERT INTO recipes (user_id, title, ingredients, instructions, notes, source_type, tags)
