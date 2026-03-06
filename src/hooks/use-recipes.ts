@@ -7,10 +7,13 @@ type RecipeRow = Database['public']['Tables']['recipes']['Row']
 export function useRecipes() {
   const supabase = createClient()
 
-  async function createRecipe(data: RecipeInsert): Promise<RecipeRow> {
+  async function createRecipe(data: Omit<RecipeInsert, 'user_id'>): Promise<RecipeRow> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('יש להתחבר כדי לשמור מתכון')
+
     const { data: recipe, error } = await supabase
       .from('recipes')
-      .insert(data)
+      .insert({ ...data, user_id: user.id })
       .select()
       .single()
     if (error) throw error
