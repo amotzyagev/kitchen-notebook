@@ -12,7 +12,7 @@ export interface Database {
           instructions: string[]
           notes: string | null
           original_text: string | null
-          source_type: 'manual' | 'link' | 'image'
+          source_type: 'manual' | 'link' | 'image' | 'import'
           source_url: string | null
           source_image_path: string | null
           tags: string[]
@@ -27,7 +27,7 @@ export interface Database {
           instructions?: string[]
           notes?: string | null
           original_text?: string | null
-          source_type?: 'manual' | 'link' | 'image'
+          source_type?: 'manual' | 'link' | 'image' | 'import'
           source_url?: string | null
           source_image_path?: string | null
           tags?: string[]
@@ -42,7 +42,7 @@ export interface Database {
           instructions?: string[]
           notes?: string | null
           original_text?: string | null
-          source_type?: 'manual' | 'link' | 'image'
+          source_type?: 'manual' | 'link' | 'image' | 'import'
           source_url?: string | null
           source_image_path?: string | null
           tags?: string[]
