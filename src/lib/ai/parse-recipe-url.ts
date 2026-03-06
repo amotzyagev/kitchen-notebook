@@ -149,7 +149,9 @@ export async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 4096,
-    system: `You are a recipe extraction assistant. Extract structured recipe data from the provided text. The text may contain blog content, stories, and other non-recipe text — focus on finding and extracting ONLY the recipe parts: title, ingredients list, and preparation instructions. Look for sections labeled with words like "חומרים" (ingredients), "הכנה" (preparation), or similar markers.`,
+    system: `You are a recipe extraction assistant. Extract structured recipe data from the provided text. The text may contain blog content, stories, and other non-recipe text — focus on finding and extracting ONLY the recipe parts: title, ingredients list, and preparation instructions. Look for sections labeled with words like "חומרים" (ingredients), "הכנה" (preparation), or similar markers.
+
+If the recipe has multiple stages or components (e.g., sauce, dough, filling, salad, topping), group the ingredients by stage. Insert a header string ending with ":" before each group — for example: "לרוטב:", "לבצק:", "לסלט:". If the recipe is simple with one stage, just list ingredients normally without headers.`,
     tools: [SAVE_RECIPE_TOOL],
     tool_choice: { type: 'any' },
     messages: [

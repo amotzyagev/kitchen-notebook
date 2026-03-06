@@ -46,10 +46,11 @@ export async function parseRecipeImage(
 2. The image may be a screenshot of a social media post (Instagram, Facebook, etc.), a photo of a cookbook page, a handwritten recipe, or any other format containing recipe text
 3. Determine if the image contains a recipe (ingredient lists, cooking instructions, or similar food preparation content)
 4. If it does, extract ALL recipe details completely — do not skip or summarize ingredients or steps
-5. If the text is already in Hebrew, keep it exactly as-is
-6. If the text is in another language, translate everything to Hebrew
-7. Set is_recipe to false ONLY if the image truly does not contain any recipe or food preparation content
-8. Always provide the complete raw OCR text in original_text before any translation`,
+5. If the recipe has multiple stages or components (e.g., sauce, dough, filling, salad, topping), group the ingredients by stage. Insert a header string ending with ":" before each group — for example: "לרוטב:", "לבצק:", "לסלט:". If the recipe is simple with one stage, just list ingredients normally without headers.
+6. If the text is already in Hebrew, keep it exactly as-is
+7. If the text is in another language, translate everything to Hebrew
+8. Set is_recipe to false ONLY if the image truly does not contain any recipe or food preparation content
+9. Always provide the complete raw OCR text in original_text before any translation`,
     tools: [SAVE_RECIPE_TOOL],
     tool_choice: { type: 'any' },
     messages: [
