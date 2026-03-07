@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { IngredientList } from '@/components/recipe/ingredient-list'
 import { InstructionList } from '@/components/recipe/instruction-list'
 import { DeleteRecipeButton } from '@/components/recipe/delete-recipe-button'
+import { ExportButton } from '@/components/recipe/export-button'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('he-IL', {
@@ -119,6 +120,7 @@ export default async function RecipeDetailPage({
             <Button variant="outline" size="sm">מקור מקורי</Button>
           </a>
         )}
+        <ExportButton recipeIds={[recipe.id]} />
         <DeleteRecipeButton recipeId={recipe.id} />
       </div>
     </div>
