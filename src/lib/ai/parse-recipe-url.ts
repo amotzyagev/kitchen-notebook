@@ -363,12 +363,6 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
     return extractWithAI(jinaMarkdown)
   }
 
-  const firecrawlMarkdown = await fetchWithFirecrawl(url)
-  if (firecrawlMarkdown) {
-    console.log('[parse] Using Firecrawl markdown for AI extraction')
-    return extractWithAI(firecrawlMarkdown)
-  }
-
   const waybackHtml = await fetchFromWayback(url)
   if (waybackHtml) {
     const jsonLdRecipe = extractJsonLdRecipe(waybackHtml)
@@ -382,6 +376,13 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
       console.log('[parse] Using Wayback cheerio text, length:', cleanText.length)
       return extractWithAI(cleanText)
     }
+  }
+
+  // Firecrawl as last resort (limited free tier: 500 scrapes/month)
+  const firecrawlMarkdown = await fetchWithFirecrawl(url)
+  if (firecrawlMarkdown) {
+    console.log('[parse] Using Firecrawl markdown for AI extraction')
+    return extractWithAI(firecrawlMarkdown)
   }
 
   throw new Error('לא הצלחתי להוריד את הדף – האתר חוסם גישה אוטומטית. נסו להעתיק את טקסט המתכון ולהדביק אותו ישירות.')

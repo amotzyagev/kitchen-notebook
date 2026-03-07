@@ -24,18 +24,8 @@ const SAVE_TRANSLATED_RECIPE_TOOL = {
         items: { type: 'string' },
         description: 'Category tags for the recipe in Hebrew (e.g., קינוח, אפייה, מאפים, סלט, מרק, בשרי, צמחוני, טבעוני, ארוחת בוקר)',
       },
-      original_text: { type: 'string', description: 'The original text before translation (keep as-is)' },
-      confidence: {
-        type: 'string',
-        enum: ['high', 'medium', 'low'],
-        description: 'Confidence level in the translation quality',
-      },
-      is_recipe: {
-        type: 'boolean',
-        description: 'Whether the content contains a recipe',
-      },
     },
-    required: ['title', 'ingredients', 'instructions', 'notes', 'tags', 'original_text', 'confidence', 'is_recipe'],
+    required: ['title', 'ingredients', 'instructions', 'notes', 'tags'],
   },
 }
 
@@ -56,10 +46,10 @@ export async function translateRecipe(extraction: AIRecipeExtraction): Promise<A
   console.log('[translate] Translating to Hebrew...')
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
+    max_tokens: 4096,
     system: `You are a translation assistant specializing in recipe translation to Hebrew.
 Translate all recipe fields (title, ingredients, instructions, notes, tags) to Hebrew.
-Keep the original_text field exactly as-is without translation.
+Do NOT include original_text, confidence, or is_recipe in your response - only translate the recipe content fields.
 Maintain the same structure and number of items in arrays.
 Use natural Hebrew cooking terminology.
 Keep measurements in their original units but write the unit names in Hebrew where appropriate.`,
@@ -68,7 +58,7 @@ Keep measurements in their original units but write the unit names in Hebrew whe
     messages: [
       {
         role: 'user',
-        content: `Translate this recipe to Hebrew. Keep original_text unchanged. Use the save_translated_recipe tool.
+        content: `Translate this recipe to Hebrew. Use the save_translated_recipe tool with only title, ingredients, instructions, notes, and tags.
 
 Title: ${extraction.title}
 
@@ -80,12 +70,7 @@ ${extraction.instructions.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
 
 Notes: ${extraction.notes}
 
-Tags: ${extraction.tags.join(', ')}
-
-Original text: ${extraction.original_text}
-
-Confidence: ${extraction.confidence}
-Is recipe: ${extraction.is_recipe}`,
+Tags: ${extraction.tags.join(', ')}`,
       },
     ],
   })
@@ -95,5 +80,11 @@ Is recipe: ${extraction.is_recipe}`,
     throw new Error('AI did not return translated recipe data')
   }
 
-  return aiRecipeExtractionSchema.parse(toolUseBlock.input)
+  const translated = toolUseBlock.input as Record<string, unknown>
+  return aiRecipeExtractionSchema.parse({
+    ...translated,
+    original_text: extraction.original_text,
+    confidence: extraction.confidence,
+    is_recipe: extraction.is_recipe,
+  })
 }
