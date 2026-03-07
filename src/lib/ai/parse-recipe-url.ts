@@ -232,7 +232,7 @@ async function fetchWithJina(url: string): Promise<string | null> {
     }
     const markdown = await response.text()
     console.log('[fetch] Jina markdown length:', markdown.length)
-    if (markdown.length < 100) {
+    if (markdown.length < 1000) {
       console.log('[fetch] Jina Reader returned too little content')
       return null
     }
@@ -271,7 +271,7 @@ async function fetchWithFirecrawl(url: string): Promise<string | null> {
     }
     const body = await response.json()
     const markdown = body?.data?.markdown
-    if (!markdown || markdown.length < 100) {
+    if (!markdown || markdown.length < 1000) {
       console.log('[fetch] Firecrawl returned too little content')
       return null
     }
@@ -360,7 +360,9 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
   const jinaMarkdown = await fetchWithJina(url)
   if (jinaMarkdown) {
     console.log('[parse] Using Jina markdown for AI extraction')
-    return extractWithAI(jinaMarkdown)
+    const result = await extractWithAI(jinaMarkdown)
+    if (result.is_recipe) return result
+    console.log('[parse] Jina content not recognized as recipe, trying next fallback')
   }
 
   const waybackHtml = await fetchFromWayback(url)
@@ -374,7 +376,9 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
     const cleanText = extractTextWithCheerio(waybackHtml)
     if (cleanText && cleanText.length > 100) {
       console.log('[parse] Using Wayback cheerio text, length:', cleanText.length)
-      return extractWithAI(cleanText)
+      const result = await extractWithAI(cleanText)
+      if (result.is_recipe) return result
+      console.log('[parse] Wayback content not recognized as recipe, trying next fallback')
     }
   }
 
