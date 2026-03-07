@@ -39,11 +39,57 @@ const SAVE_RECIPE_TOOL = {
   },
 }
 
-async function ocrImage(
+async function ocrWithGoogleVision(imageBase64: string): Promise<string | null> {
+  const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
+  if (!apiKey) {
+    console.log('[parse-image] Google Cloud Vision API key not set, skipping')
+    return null
+  }
+
+  console.log('[parse-image] Step 1: OCR with Google Cloud Vision')
+  const res = await fetch(
+    `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requests: [
+          {
+            image: { content: imageBase64 },
+            features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
+            imageContext: { languageHints: ['he', 'en'] },
+          },
+        ],
+      }),
+    }
+  )
+
+  if (!res.ok) {
+    console.error('[parse-image] Google Vision error:', res.status, await res.text())
+    return null
+  }
+
+  const data = await res.json() as {
+    responses: Array<{
+      fullTextAnnotation?: { text: string }
+      error?: { message: string }
+    }>
+  }
+  const annotation = data.responses?.[0]?.fullTextAnnotation
+  if (!annotation?.text) {
+    console.log('[parse-image] Google Vision returned no text')
+    return null
+  }
+
+  console.log('[parse-image] Google Vision OCR result length:', annotation.text.length)
+  return annotation.text
+}
+
+async function ocrWithClaude(
   imageBase64: string,
   mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
 ): Promise<string> {
-  console.log('[parse-image] Step 1: OCR - reading all text from image')
+  console.log('[parse-image] Step 1: OCR with Claude Vision (fallback)')
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
@@ -81,8 +127,20 @@ async function ocrImage(
     throw new Error('OCR did not return text')
   }
 
-  console.log('[parse-image] OCR result length:', textBlock.text.length)
+  console.log('[parse-image] Claude OCR result length:', textBlock.text.length)
   return textBlock.text
+}
+
+async function ocrImage(
+  imageBase64: string,
+  mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
+): Promise<string> {
+  // Try Google Cloud Vision first (better Hebrew accuracy)
+  const googleResult = await ocrWithGoogleVision(imageBase64)
+  if (googleResult) return googleResult
+
+  // Fall back to Claude Vision
+  return ocrWithClaude(imageBase64, mediaType)
 }
 
 async function extractRecipeFromText(ocrText: string): Promise<AIRecipeExtraction> {
