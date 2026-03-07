@@ -17,7 +17,7 @@ export default function NewRecipePage() {
   const router = useRouter()
   const { createRecipe, uploadRecipeImage, updateRecipe } = useRecipes()
   const [isLoading, setIsLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('manual')
+  const [activeTab, setActiveTab] = useState('link')
 
   // Extracted data from AI
   const [extractedData, setExtractedData] = useState<AIRecipeExtraction | null>(null)
@@ -116,7 +116,7 @@ export default function NewRecipePage() {
       <h1 className="text-2xl font-bold">מתכון חדש</h1>
 
       <Tabs
-        defaultValue="manual"
+        defaultValue="link"
         value={activeTab}
         onValueChange={(val) => {
           setActiveTab(val)
@@ -124,28 +124,15 @@ export default function NewRecipePage() {
           setExtractedData(null)
           setSourceUrl(undefined)
           setPhotoFile(null)
-          if (val === 'manual') {
-            setShowForm(true)
-          } else {
-            setShowForm(false)
-          }
+          setShowForm(false)
         }}
       >
         <TabsList>
-          <TabsTrigger value="manual">ידני</TabsTrigger>
+          <TabsTrigger value="link">קישור</TabsTrigger>
           <TabsTrigger value="text">טקסט חופשי</TabsTrigger>
           <TabsTrigger value="photo">צילום</TabsTrigger>
-          <TabsTrigger value="link">קישור</TabsTrigger>
           <TabsTrigger value="import">ייבוא</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="manual">
-          <RecipeForm
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-            sourceType="manual"
-          />
-        </TabsContent>
 
         <TabsContent value="text">
           {!showForm || !extractedData ? (
