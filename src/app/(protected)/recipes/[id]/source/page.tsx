@@ -41,7 +41,7 @@ export default async function SourcePage({
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">השוואת מקור</h1>
+        <h1 className="text-2xl font-[var(--font-display)] text-primary">השוואת מקור</h1>
         <div className="flex gap-3">
           <Link href={`/recipes/${recipe.id}`}>
             <Button variant="outline" size="sm">חזור למתכון</Button>

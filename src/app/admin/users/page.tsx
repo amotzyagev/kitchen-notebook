@@ -67,7 +67,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6" dir="rtl">
-      <h1 className="text-2xl font-bold">ניהול משתמשים</h1>
+      <h1 className="text-2xl font-[var(--font-display)] text-primary">ניהול משתמשים</h1>
 
       {/* Pending */}
       <section className="space-y-3">

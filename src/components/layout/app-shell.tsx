@@ -33,9 +33,9 @@ export function AppShell({ user, children }: AppShellProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4">
-          <h1 className="text-lg font-bold">מחברת המתכונים</h1>
+          <h1 className="text-xl font-[var(--font-display)] text-primary tracking-wide">מחברת המתכונים</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">

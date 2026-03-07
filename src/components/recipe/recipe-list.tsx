@@ -170,10 +170,11 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recipes.map((recipe) => (
+          {recipes.map((recipe, i) => (
             <RecipeCard
               key={recipe.id}
               recipe={recipe}
+              index={i}
               selectable={selectionMode}
               selected={selectedIds.has(recipe.id)}
               onSelect={() => toggleSelection(recipe.id)}

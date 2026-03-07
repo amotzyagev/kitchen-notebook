@@ -14,6 +14,7 @@ interface RecipeCardProps {
   selected?: boolean
   onSelect?: () => void
   isShared?: boolean
+  index?: number
 }
 
 function formatDate(dateStr: string): string {
@@ -38,12 +39,13 @@ function sourceIcon(type: Recipe['source_type']): string {
   }
 }
 
-export function RecipeCard({ recipe, selectable, selected, onSelect, isShared }: RecipeCardProps) {
+export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, index = 0 }: RecipeCardProps) {
   const ingredientPreview = recipe.ingredients.slice(0, 2).join(', ')
 
   const cardContent = (
     <Card
-      className={`h-full transition-shadow hover:shadow-md cursor-pointer ${selected ? 'ring-2 ring-primary' : ''}`}
+      className={`card-animate h-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${selected ? 'ring-2 ring-primary' : ''}`}
+      style={{ animationDelay: `${index * 50}ms` }}
       dir="rtl"
     >
       <CardHeader>

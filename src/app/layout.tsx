@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Heebo } from "next/font/google";
+import { Heebo, Secular_One } from "next/font/google";
 import { RTLProvider } from "@/components/layout/direction-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const heebo = Heebo({
   variable: "--font-heebo",
+  subsets: ["hebrew", "latin"],
+});
+
+const secularOne = Secular_One({
+  variable: "--font-display",
+  weight: "400",
   subsets: ["hebrew", "latin"],
 });
 
@@ -32,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl">
-      <body className={`${heebo.variable} font-sans antialiased`}>
+      <body className={`${heebo.variable} ${secularOne.variable} font-sans antialiased`}>
         <RTLProvider>{children}</RTLProvider>
         <Toaster position="bottom-center" dir="rtl" />
         <script
