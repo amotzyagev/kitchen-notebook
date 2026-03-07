@@ -1,0 +1,11 @@
+{
+  "name": "מחברת המתכונים",
+  "short_name": "מתכונים",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E85D2C",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

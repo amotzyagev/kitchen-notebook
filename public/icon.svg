@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Open book/notebook -->
+  <path d="M64 96 C64 80, 80 64, 96 64 L240 64 L256 80 L256 416 L240 400 L96 400 C80 400, 64 384, 64 368 Z" fill="#FFEEDD" stroke="#E85D2C" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M448 96 C448 80, 432 64, 416 64 L272 64 L256 80 L256 416 L272 400 L416 400 C432 400, 448 384, 448 368 Z" fill="#FFEEDD" stroke="#E85D2C" stroke-width="12" stroke-linejoin="round"/>
+  <!-- Spine line -->
+  <line x1="256" y1="80" x2="256" y2="416" stroke="#E85D2C" stroke-width="8"/>
+  <!-- Lines on left page -->
+  <line x1="104" y1="140" x2="224" y2="140" stroke="#E85D2C" stroke-width="4" opacity="0.4"/>
+  <line x1="104" y1="180" x2="224" y2="180" stroke="#E85D2C" stroke-width="4" opacity="0.4"/>
+  <line x1="104" y1="220" x2="224" y2="220" stroke="#E85D2C" stroke-width="4" opacity="0.4"/>
+  <line x1="104" y1="260" x2="224" y2="260" stroke="#E85D2C" stroke-width="4" opacity="0.4"/>
+  <line x1="104" y1="300" x2="224" y2="300" stroke="#E85D2C" stroke-width="4" opacity="0.4"/>
+  <line x1="104" y1="340" x2="224" y2="340" stroke="#E85D2C" stroke-width="4" opacity="0.4"/>
+  <!-- Spoon on right page -->
+  <ellipse cx="356" cy="170" rx="32" ry="48" fill="#E85D2C" opacity="0.85"/>
+  <rect x="350" y="210" width="12" height="150" rx="6" fill="#E85D2C" opacity="0.85"/>
+</svg>

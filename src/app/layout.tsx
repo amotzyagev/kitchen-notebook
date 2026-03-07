@@ -11,6 +11,16 @@ const heebo = Heebo({
 export const metadata: Metadata = {
   title: "מחברת המתכונים",
   description: "פנקס המתכונים האישי שלך",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "מחברת המתכונים",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({
