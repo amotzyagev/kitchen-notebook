@@ -186,6 +186,10 @@ async function fetchSimple(url: string): Promise<string | null> {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9,he;q=0.8',
+        Referer: 'https://www.google.com/',
+        'Sec-Fetch-Site': 'cross-site',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Dest': 'document',
       },
       redirect: 'follow',
     })
@@ -209,7 +213,7 @@ async function fetchSimple(url: string): Promise<string | null> {
   }
 }
 
-async function fetchWithJina(url: string): Promise<string> {
+async function fetchWithJina(url: string): Promise<string | null> {
   console.log('[fetch] Trying Jina Reader for:', url)
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 60000)
@@ -223,16 +227,106 @@ async function fetchWithJina(url: string): Promise<string> {
     })
     console.log('[fetch] Jina status:', response.status)
     if (!response.ok) {
-      throw new Error(`Jina Reader returned ${response.status}`)
+      console.log('[fetch] Jina Reader returned non-OK status:', response.status)
+      return null
     }
     const markdown = await response.text()
     console.log('[fetch] Jina markdown length:', markdown.length)
     if (markdown.length < 100) {
-      throw new Error('Jina Reader returned too little content')
+      console.log('[fetch] Jina Reader returned too little content')
+      return null
     }
     return markdown
+  } catch (err) {
+    console.error('[fetch] Jina Reader error:', err instanceof Error ? err.message : err)
+    return null
   } finally {
     clearTimeout(timeout)
+  }
+}
+
+async function fetchWithFirecrawl(url: string): Promise<string | null> {
+  const apiKey = process.env.FIRECRAWL_API_KEY
+  if (!apiKey) {
+    console.log('[fetch] FIRECRAWL_API_KEY not set, skipping Firecrawl')
+    return null
+  }
+  console.log('[fetch] Trying Firecrawl for:', url)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
+  try {
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ url, formats: ['markdown'] }),
+    })
+    console.log('[fetch] Firecrawl status:', response.status)
+    if (!response.ok) {
+      console.log('[fetch] Firecrawl returned non-OK status:', response.status)
+      return null
+    }
+    const body = await response.json()
+    const markdown = body?.data?.markdown
+    if (!markdown || markdown.length < 100) {
+      console.log('[fetch] Firecrawl returned too little content')
+      return null
+    }
+    console.log('[fetch] Firecrawl markdown length:', markdown.length)
+    return markdown
+  } catch (err) {
+    console.error('[fetch] Firecrawl error:', err instanceof Error ? err.message : err)
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function fetchFromWayback(url: string): Promise<string | null> {
+  console.log('[fetch] Trying Wayback Machine for:', url)
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    // Step 1: Query CDX API for latest snapshot
+    const cdxController = new AbortController()
+    timeout = setTimeout(() => cdxController.abort(), 15000)
+    const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&limit=1&sort=reverse`
+    const cdxResponse = await fetch(cdxUrl, { signal: cdxController.signal })
+    clearTimeout(timeout)
+    console.log('[fetch] Wayback CDX status:', cdxResponse.status)
+    if (!cdxResponse.ok) {
+      console.log('[fetch] Wayback CDX returned non-OK status:', cdxResponse.status)
+      return null
+    }
+    const cdxData = await cdxResponse.json()
+    if (!Array.isArray(cdxData) || cdxData.length < 2) {
+      console.log('[fetch] No Wayback snapshots found')
+      return null
+    }
+    const timestamp = cdxData[1][1]
+    console.log('[fetch] Wayback snapshot timestamp:', timestamp)
+
+    // Step 2: Fetch the archived HTML
+    const htmlController = new AbortController()
+    timeout = setTimeout(() => htmlController.abort(), 30000)
+    const waybackUrl = `https://web.archive.org/web/${timestamp}id_/${url}`
+    const htmlResponse = await fetch(waybackUrl, { signal: htmlController.signal })
+    clearTimeout(timeout)
+    console.log('[fetch] Wayback HTML status:', htmlResponse.status)
+    if (!htmlResponse.ok) {
+      console.log('[fetch] Wayback HTML returned non-OK status:', htmlResponse.status)
+      return null
+    }
+    const html = await htmlResponse.text()
+    console.log('[fetch] Wayback HTML length:', html.length)
+    return html
+  } catch (err) {
+    console.error('[fetch] Wayback error:', err instanceof Error ? err.message : err)
+    return null
+  } finally {
+    if (timeout) clearTimeout(timeout)
   }
 }
 
@@ -259,11 +353,36 @@ export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
       console.log('[parse] Using cheerio text, length:', cleanText.length)
       return extractWithAI(cleanText)
     }
-    console.log('[parse] Cheerio extraction too short or empty, trying Jina')
+    console.log('[parse] Cheerio extraction too short or empty, trying fallbacks')
   }
 
-  // Step 3: Fallback to Jina Reader (handles bot protection, JS rendering)
-  const markdown = await fetchWithJina(url)
-  console.log('[parse] Using Jina markdown for AI extraction')
-  return extractWithAI(markdown)
+  // Fallback chain for when direct fetch fails or has no usable content
+  const jinaMarkdown = await fetchWithJina(url)
+  if (jinaMarkdown) {
+    console.log('[parse] Using Jina markdown for AI extraction')
+    return extractWithAI(jinaMarkdown)
+  }
+
+  const firecrawlMarkdown = await fetchWithFirecrawl(url)
+  if (firecrawlMarkdown) {
+    console.log('[parse] Using Firecrawl markdown for AI extraction')
+    return extractWithAI(firecrawlMarkdown)
+  }
+
+  const waybackHtml = await fetchFromWayback(url)
+  if (waybackHtml) {
+    const jsonLdRecipe = extractJsonLdRecipe(waybackHtml)
+    if (jsonLdRecipe && jsonLdRecipe.name) {
+      console.log('[parse] Found JSON-LD recipe in Wayback snapshot:', jsonLdRecipe.name)
+      const mapped = mapSchemaOrgToExtraction(jsonLdRecipe)
+      return { ...mapped, confidence: 'high', is_recipe: true }
+    }
+    const cleanText = extractTextWithCheerio(waybackHtml)
+    if (cleanText && cleanText.length > 100) {
+      console.log('[parse] Using Wayback cheerio text, length:', cleanText.length)
+      return extractWithAI(cleanText)
+    }
+  }
+
+  throw new Error('לא הצלחתי להוריד את הדף – האתר חוסם גישה אוטומטית. נסו להעתיק את טקסט המתכון ולהדביק אותו ישירות.')
 }
