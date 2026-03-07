@@ -37,7 +37,7 @@ export default function RootLayout({
         <Toaster position="bottom-center" dir="rtl" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+            __html: `(function(){var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme:dark)');function u(){d.classList.toggle('dark',m.matches)}u();m.addEventListener('change',u);if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}})()`,
           }}
         />
       </body>
