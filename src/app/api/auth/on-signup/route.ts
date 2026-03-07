@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const supabase = createAdminClient()
 
     // Auto-approve if admin
-    const isAdmin = email === adminEmail
+    const isAdmin = email?.toLowerCase() === adminEmail?.toLowerCase()
 
     // Create user profile
     const { error: profileError } = await supabase

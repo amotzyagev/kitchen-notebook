@@ -8,7 +8,7 @@ export async function GET() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user || user.email !== process.env.ADMIN_EMAIL) {
+    if (!user || user.email?.toLowerCase() !== process.env.ADMIN_EMAIL?.toLowerCase()) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
     }
 

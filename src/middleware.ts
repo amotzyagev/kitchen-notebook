@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
   // Check approval status for authenticated users on protected routes
   if (user && isProtectedRoute) {
     const adminEmail = process.env.ADMIN_EMAIL
-    const isAdmin = user.email === adminEmail
+    const isAdmin = user.email?.toLowerCase() === adminEmail?.toLowerCase()
 
     if (!isAdmin) {
       // Check user_profiles for approval
@@ -105,7 +105,7 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
-    if (user.email !== process.env.ADMIN_EMAIL) {
+    if (user.email?.toLowerCase() !== process.env.ADMIN_EMAIL?.toLowerCase()) {
       const url = request.nextUrl.clone()
       url.pathname = '/recipes'
       return NextResponse.redirect(url)

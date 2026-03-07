@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
@@ -11,6 +12,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'unauthorized', message: 'יש להתחבר' },
         { status: 401 }
+      )
+    }
+
+    const { success: withinLimit } = rateLimit(user.id, 20)
+    if (!withinLimit) {
+      return NextResponse.json(
+        { error: 'rate_limit', message: 'יותר מדי בקשות. נסו שוב בעוד דקה.' },
+        { status: 429 }
       )
     }
 

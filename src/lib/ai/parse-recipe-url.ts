@@ -49,12 +49,17 @@ const SAVE_RECIPE_TOOL = {
 }
 
 function isPrivateIP(ip: string): boolean {
-  // IPv6 loopback and private
-  if (ip === '::1') return true
-  if (ip.startsWith('fc') || ip.startsWith('fd')) return true // fc00::/7
+  const normalized = ip.toLowerCase()
 
-  // Parse IPv4 (also handles IPv4-mapped IPv6 like ::ffff:127.0.0.1)
-  const v4Match = ip.match(/(?:::ffff:)?(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  // IPv6 loopback
+  if (normalized === '::1' || normalized === '0:0:0:0:0:0:0:1') return true
+
+  // IPv6 private ranges (case-insensitive)
+  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true // ULA fc00::/7
+  if (normalized.startsWith('fe80')) return true // Link-local fe80::/10
+
+  // Parse IPv4 (handles plain IPv4, ::ffff:x.x.x.x, and ::ffff:0:x.x.x.x)
+  const v4Match = normalized.match(/(?:::ffff:(?:0:)?)?(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
   if (!v4Match) return false
 
   const [a, b] = [parseInt(v4Match[1], 10), parseInt(v4Match[2], 10)]
@@ -90,9 +95,11 @@ async function validateUrl(url: string): Promise<void> {
 
   // Resolve hostname and check for private/reserved IPs
   try {
-    const { address } = await dns.promises.lookup(hostname)
-    if (isPrivateIP(address)) {
-      throw new Error(ERROR_MESSAGE)
+    const results = await dns.promises.lookup(hostname, { all: true })
+    for (const result of results) {
+      if (isPrivateIP(result.address)) {
+        throw new Error(ERROR_MESSAGE)
+      }
     }
   } catch (err) {
     // Re-throw our own error; wrap DNS failures
