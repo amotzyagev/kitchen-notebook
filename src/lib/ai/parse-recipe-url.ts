@@ -212,7 +212,7 @@ async function fetchSimple(url: string): Promise<string | null> {
 async function fetchWithJina(url: string): Promise<string> {
   console.log('[fetch] Trying Jina Reader for:', url)
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15000)
+  const timeout = setTimeout(() => controller.abort(), 60000)
   try {
     const response = await fetch(`https://r.jina.ai/${url}`, {
       signal: controller.signal,
