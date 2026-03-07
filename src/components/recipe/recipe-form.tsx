@@ -164,6 +164,7 @@ export function RecipeForm({
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label="הסר מרכיב"
                   onClick={() => removeIngredient(index)}
                 >
                   <Trash2 className="size-4" />
@@ -210,6 +211,7 @@ export function RecipeForm({
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label="הסר שלב"
                   onClick={() => removeInstruction(index)}
                 >
                   <Trash2 className="size-4" />

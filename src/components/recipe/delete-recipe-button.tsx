@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { useRecipes } from '@/hooks/use-recipes'
+import { toast } from 'sonner'
 import { Trash2 } from 'lucide-react'
 
 interface DeleteRecipeButtonProps {
@@ -33,7 +34,7 @@ export function DeleteRecipeButton({ recipeId }: DeleteRecipeButtonProps) {
       router.push('/recipes')
     } catch (error) {
       console.error('Failed to delete recipe:', error)
-      alert('שגיאה במחיקת המתכון. אנא נסה שוב.')
+      toast.error('שגיאה במחיקת המתכון. אנא נסה שוב.')
     } finally {
       setIsDeleting(false)
     }

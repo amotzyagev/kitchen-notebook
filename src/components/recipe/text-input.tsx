@@ -54,7 +54,7 @@ export function TextInput({ onExtracted }: TextInputProps) {
         disabled={isLoading}
       />
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
       <Button
         onClick={handleSubmit}

@@ -52,6 +52,7 @@ export function RecipeCard({ recipe, selectable, selected, onSelect, isShared }:
             <Checkbox
               checked={selected}
               className="shrink-0"
+              aria-label="בחר מתכון"
               onClick={(e) => e.stopPropagation()}
             />
           )}

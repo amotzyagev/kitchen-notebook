@@ -6,6 +6,7 @@ import { RecipeForm } from '@/components/recipe/recipe-form'
 import { useRecipes } from '@/hooks/use-recipes'
 import { createClient } from '@/lib/supabase/client'
 import type { RecipeForm as RecipeFormType } from '@/lib/validators/recipe'
+import { toast } from 'sonner'
 import type { Database } from '@/types/database'
 
 type Recipe = Database['public']['Tables']['recipes']['Row']
@@ -51,7 +52,7 @@ export default function EditRecipePage() {
       router.push(`/recipes/${params.id}`)
     } catch (error) {
       console.error('Failed to update recipe:', error)
-      alert('שגיאה בעדכון המתכון. אנא נסה שוב.')
+      toast.error('שגיאה בעדכון המתכון. אנא נסה שוב.')
     } finally {
       setIsLoading(false)
     }

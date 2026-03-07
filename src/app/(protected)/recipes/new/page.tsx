@@ -9,6 +9,7 @@ import { UrlInput } from '@/components/recipe/url-input'
 import { TextInput } from '@/components/recipe/text-input'
 import { FileImport } from '@/components/recipe/file-import'
 import { useRecipes } from '@/hooks/use-recipes'
+import { toast } from 'sonner'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 import type { RecipeForm as RecipeFormType } from '@/lib/validators/recipe'
 
@@ -92,7 +93,7 @@ export default function NewRecipePage() {
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : JSON.stringify(error)
         console.error('Failed to save recipe:', errMsg, error)
-        alert(`שגיאה בשמירת המתכון: ${errMsg}`)
+        toast.error(`שגיאה בשמירת המתכון: ${errMsg}`)
       } finally {
         setIsLoading(false)
       }

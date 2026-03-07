@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "מחברת המתכונים",
   description: "פנקס המתכונים האישי שלך",
   manifest: "/manifest.json",
+  themeColor: "#E85D2C",
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
@@ -34,6 +35,11 @@ export default function RootLayout({
       <body className={`${heebo.variable} font-sans antialiased`}>
         <RTLProvider>{children}</RTLProvider>
         <Toaster position="bottom-center" dir="rtl" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
       </body>
     </html>
   );

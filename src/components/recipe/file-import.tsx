@@ -171,7 +171,7 @@ export function FileImport() {
                       <p className="text-xs text-green-600 truncate">{entry.recipe.title}</p>
                     )}
                     {entry.status === 'failed' && entry.error && (
-                      <p className="text-xs text-red-600">{entry.error}</p>
+                      <p className="text-xs text-destructive">{entry.error}</p>
                     )}
                     {entry.status === 'processing' && (
                       <p className="text-xs text-muted-foreground">מעבד...</p>

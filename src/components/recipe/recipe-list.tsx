@@ -125,6 +125,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
           size="icon"
           onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
           title={selectionMode ? 'ביטול בחירה' : 'בחירת מתכונים'}
+          aria-label={selectionMode ? 'ביטול בחירה' : 'בחירת מתכונים'}
         >
           <CheckSquare className="size-4" />
         </Button>
