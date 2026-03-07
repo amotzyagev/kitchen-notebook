@@ -6,7 +6,7 @@ import { Camera, Loader2 } from 'lucide-react'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 interface PhotoUploadProps {
-  onExtracted: (data: AIRecipeExtraction) => void
+  onExtracted: (data: AIRecipeExtraction, imageFile: File) => void
   onError?: (message: string) => void
 }
 
@@ -64,7 +64,7 @@ export function PhotoUpload({ onExtracted, onError }: PhotoUploadProps) {
       }
 
       const data: AIRecipeExtraction = await response.json()
-      onExtracted(data)
+      onExtracted(data, compressed)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'שגיאה בעיבוד התמונה'
       setError(message)

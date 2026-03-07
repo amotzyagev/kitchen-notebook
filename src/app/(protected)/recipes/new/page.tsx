@@ -14,13 +14,14 @@ import type { RecipeForm as RecipeFormType } from '@/lib/validators/recipe'
 
 export default function NewRecipePage() {
   const router = useRouter()
-  const { createRecipe } = useRecipes()
+  const { createRecipe, uploadRecipeImage, updateRecipe } = useRecipes()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('manual')
 
   // Extracted data from AI
   const [extractedData, setExtractedData] = useState<AIRecipeExtraction | null>(null)
   const [sourceUrl, setSourceUrl] = useState<string | undefined>()
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [showForm, setShowForm] = useState(true)
 
   const handleTextExtracted = useCallback((data: AIRecipeExtraction) => {
@@ -28,8 +29,9 @@ export default function NewRecipePage() {
     setShowForm(true)
   }, [])
 
-  const handlePhotoExtracted = useCallback((data: AIRecipeExtraction) => {
+  const handlePhotoExtracted = useCallback((data: AIRecipeExtraction, imageFile: File) => {
     setExtractedData(data)
+    setPhotoFile(imageFile)
     setShowForm(true)
   }, [])
 
@@ -50,18 +52,43 @@ export default function NewRecipePage() {
     ) => {
       setIsLoading(true)
       try {
-        const recipe = await createRecipe({
-          title: data.title,
-          ingredients: data.ingredients,
-          instructions: data.instructions,
-          notes: data.notes || null,
-          tags: data.tags,
-          source_type: meta?.sourceType || 'manual',
-          source_url: meta?.sourceUrl || null,
-          source_image_path: meta?.sourceImagePath || null,
-          original_text: meta?.originalText || null,
-        })
-        router.push(`/recipes/${recipe.id}`)
+        // For image source type, we need to upload first then update with path
+        // Create recipe with a placeholder path first, then upload and update
+        if (meta?.sourceType === 'image' && photoFile) {
+          // Create recipe as 'manual' first to avoid CHECK constraint,
+          // then upload image and update to 'image' with path
+          const recipe = await createRecipe({
+            title: data.title,
+            ingredients: data.ingredients,
+            instructions: data.instructions,
+            notes: data.notes || null,
+            tags: data.tags,
+            source_type: 'manual',
+            original_text: meta?.originalText || null,
+          })
+
+          // Upload image and update recipe
+          const imagePath = await uploadRecipeImage(recipe.user_id, recipe.id, photoFile)
+          await updateRecipe(recipe.id, {
+            source_type: 'image',
+            source_image_path: imagePath,
+          })
+
+          router.push(`/recipes/${recipe.id}`)
+        } else {
+          const recipe = await createRecipe({
+            title: data.title,
+            ingredients: data.ingredients,
+            instructions: data.instructions,
+            notes: data.notes || null,
+            tags: data.tags,
+            source_type: meta?.sourceType || 'manual',
+            source_url: meta?.sourceUrl || null,
+            source_image_path: meta?.sourceImagePath || null,
+            original_text: meta?.originalText || null,
+          })
+          router.push(`/recipes/${recipe.id}`)
+        }
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : JSON.stringify(error)
         console.error('Failed to save recipe:', errMsg, error)
@@ -70,7 +97,7 @@ export default function NewRecipePage() {
         setIsLoading(false)
       }
     },
-    [createRecipe, router]
+    [createRecipe, uploadRecipeImage, updateRecipe, photoFile, router]
   )
 
   const defaultValues = extractedData
@@ -95,6 +122,7 @@ export default function NewRecipePage() {
           // Reset extracted data when switching tabs
           setExtractedData(null)
           setSourceUrl(undefined)
+          setPhotoFile(null)
           if (val === 'manual') {
             setShowForm(true)
           } else {
