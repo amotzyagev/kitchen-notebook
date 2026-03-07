@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { IngredientList } from '@/components/recipe/ingredient-list'
 import { InstructionList } from '@/components/recipe/instruction-list'
 import { DeleteRecipeButton } from '@/components/recipe/delete-recipe-button'
+import { RemoveSharedRecipeButton } from '@/components/recipe/remove-shared-recipe-button'
 import { ExportButton } from '@/components/recipe/export-button'
 import { ShareButton } from '@/components/recipe/share-button'
 
@@ -62,7 +63,7 @@ export default async function RecipeDetailPage({
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold">{recipe.title}</h1>
+          <h1 className="text-2xl font-[var(--font-display)]">{recipe.title}</h1>
           <div className="flex gap-2 items-center">
             {!isOwner && <Badge variant="secondary">משותף</Badge>}
             <Badge variant="outline">{sourceLabel(recipe.source_type)}</Badge>
@@ -132,6 +133,7 @@ export default async function RecipeDetailPage({
         <ShareButton recipeIds={[recipe.id]} />
         <ExportButton recipeIds={[recipe.id]} />
         {isOwner && <DeleteRecipeButton recipeId={recipe.id} />}
+        {!isOwner && <RemoveSharedRecipeButton recipeId={recipe.id} />}
       </div>
     </div>
   )
