@@ -29,6 +29,73 @@ const SAVE_TRANSLATED_RECIPE_TOOL = {
   },
 }
 
+const REFINE_RECIPE_TOOL = {
+  name: 'save_refined_recipe' as const,
+  description: 'Save the refined Hebrew recipe text',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      title: { type: 'string', description: 'Refined recipe title in Hebrew' },
+      instructions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Refined preparation steps in natural Hebrew',
+      },
+      notes: { type: 'string', description: 'Refined notes in natural Hebrew' },
+    },
+    required: ['title', 'instructions', 'notes'],
+  },
+}
+
+async function refineTranslation(translated: AIRecipeExtraction): Promise<AIRecipeExtraction> {
+  console.log('[translate] Refining Hebrew translation...')
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      system: `You are a Hebrew language editor specializing in cooking content.
+Review the translated recipe and improve the Hebrew phrasing.
+Focus on making instructions read naturally, as if written by a native Hebrew speaker.
+Fix literal translations, awkward phrasing, and ensure proper Hebrew cooking terminology.
+Do not change the meaning, just improve how it reads in Hebrew.
+Do not change ingredient names or quantities - only refine title, instructions, and notes.`,
+      tools: [REFINE_RECIPE_TOOL],
+      tool_choice: { type: 'any' },
+      messages: [
+        {
+          role: 'user',
+          content: `Review and refine this Hebrew recipe translation. Use the save_refined_recipe tool.
+
+Title: ${translated.title}
+
+Instructions:
+${translated.instructions.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
+
+Notes: ${translated.notes}`,
+        },
+      ],
+    })
+
+    const toolUseBlock = response.content.find((block) => block.type === 'tool_use')
+    if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+      console.log('[translate] Refine pass did not return tool use, using first-pass result')
+      return translated
+    }
+
+    const refined = toolUseBlock.input as { title: string; instructions: string[]; notes: string }
+    console.log('[translate] Refinement complete')
+    return {
+      ...translated,
+      title: refined.title || translated.title,
+      instructions: refined.instructions || translated.instructions,
+      notes: refined.notes ?? translated.notes,
+    }
+  } catch (err) {
+    console.error('[translate] Refine error, using first-pass result:', err instanceof Error ? err.message : err)
+    return translated
+  }
+}
+
 export function isHebrew(text: string): boolean {
   const hebrewChars = text.match(/[\u0590-\u05FF]/g) || []
   const latinChars = text.match(/[a-zA-Z]/g) || []
@@ -45,7 +112,7 @@ export async function translateRecipe(extraction: AIRecipeExtraction): Promise<A
 
   console.log('[translate] Translating to Hebrew...')
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4096,
     system: `You are a translation assistant specializing in recipe translation to Hebrew.
 Translate all recipe fields (title, ingredients, instructions, notes, tags) to Hebrew.
@@ -81,10 +148,12 @@ Tags: ${extraction.tags.join(', ')}`,
   }
 
   const translated = toolUseBlock.input as Record<string, unknown>
-  return aiRecipeExtractionSchema.parse({
+  const firstPass = aiRecipeExtractionSchema.parse({
     ...translated,
     original_text: extraction.original_text,
     confidence: extraction.confidence,
     is_recipe: extraction.is_recipe,
   })
+
+  return refineTranslation(firstPass)
 }
