@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 
 interface Recipe {
   id: string
@@ -16,10 +15,7 @@ function isGroupHeader(text: string): boolean {
 }
 
 export function PrintView({ recipes }: { recipes: Recipe[] }) {
-  useEffect(() => {
-    const timer = setTimeout(() => window.print(), 500)
-    return () => clearTimeout(timer)
-  }, [])
+  // No auto-print — let the user tap the button when ready
 
   return (
     <div className="print-view" dir="rtl">
