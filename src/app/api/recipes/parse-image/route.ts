@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { parseImageRequestSchema } from '@/lib/validators/api'
 import { parseRecipeImage } from '@/lib/ai/parse-recipe-image'
 
-export const maxDuration = 30
+export const maxDuration = 120
 
 export async function POST(request: Request) {
   try {
