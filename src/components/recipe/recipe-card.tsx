@@ -3,12 +3,17 @@
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { Database } from '@/types/database'
 
 type Recipe = Database['public']['Tables']['recipes']['Row']
 
 interface RecipeCardProps {
   recipe: Recipe
+  selectable?: boolean
+  selected?: boolean
+  onSelect?: () => void
+  isShared?: boolean
 }
 
 function formatDate(dateStr: string): string {
@@ -33,44 +38,73 @@ function sourceIcon(type: Recipe['source_type']): string {
   }
 }
 
-export function RecipeCard({ recipe }: RecipeCardProps) {
+export function RecipeCard({ recipe, selectable, selected, onSelect, isShared }: RecipeCardProps) {
   const ingredientPreview = recipe.ingredients.slice(0, 2).join(', ')
 
-  return (
-    <Link href={`/recipes/${recipe.id}`} className="block">
-      <Card className="h-full transition-shadow hover:shadow-md cursor-pointer" dir="rtl">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-lg line-clamp-1">
-              {recipe.title}
-            </CardTitle>
-            <span className="text-lg shrink-0" title={recipe.source_type}>
+  const cardContent = (
+    <Card
+      className={`h-full transition-shadow hover:shadow-md cursor-pointer ${selected ? 'ring-2 ring-primary' : ''}`}
+      dir="rtl"
+    >
+      <CardHeader>
+        <div className="flex items-center justify-between gap-2">
+          {selectable && (
+            <Checkbox
+              checked={selected}
+              className="shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+          <CardTitle className="text-lg line-clamp-1 flex-1">
+            {recipe.title}
+          </CardTitle>
+          <div className="flex items-center gap-1 shrink-0">
+            {isShared && (
+              <Badge variant="secondary" className="text-xs">
+                משותף
+              </Badge>
+            )}
+            <span className="text-lg" title={recipe.source_type}>
               {sourceIcon(recipe.source_type)}
             </span>
           </div>
-          {ingredientPreview && (
-            <CardDescription className="line-clamp-1">
-              {ingredientPreview}
-            </CardDescription>
-          )}
-        </CardHeader>
-        {recipe.tags.length > 0 && (
-          <CardContent>
-            <div className="flex flex-wrap gap-1">
-              {recipe.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
+        </div>
+        {ingredientPreview && (
+          <CardDescription className="line-clamp-1">
+            {ingredientPreview}
+          </CardDescription>
         )}
-        <CardFooter>
-          <span className="text-xs text-muted-foreground">
-            {formatDate(recipe.updated_at)}
-          </span>
-        </CardFooter>
-      </Card>
+      </CardHeader>
+      {recipe.tags.length > 0 && (
+        <CardContent>
+          <div className="flex flex-wrap gap-1">
+            {recipe.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      )}
+      <CardFooter>
+        <span className="text-xs text-muted-foreground">
+          {formatDate(recipe.updated_at)}
+        </span>
+      </CardFooter>
+    </Card>
+  )
+
+  if (selectable) {
+    return (
+      <div onClick={onSelect} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.() }}>
+        {cardContent}
+      </div>
+    )
+  }
+
+  return (
+    <Link href={`/recipes/${recipe.id}`} className="block">
+      {cardContent}
     </Link>
   )
 }

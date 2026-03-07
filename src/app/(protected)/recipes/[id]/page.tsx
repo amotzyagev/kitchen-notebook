@@ -8,6 +8,7 @@ import { IngredientList } from '@/components/recipe/ingredient-list'
 import { InstructionList } from '@/components/recipe/instruction-list'
 import { DeleteRecipeButton } from '@/components/recipe/delete-recipe-button'
 import { ExportButton } from '@/components/recipe/export-button'
+import { ShareButton } from '@/components/recipe/share-button'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('he-IL', {
@@ -49,6 +50,9 @@ export default async function RecipeDetailPage({
     notFound()
   }
 
+  const { data: { user } } = await supabase.auth.getUser()
+  const isOwner = user?.id === recipe.user_id
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6" dir="rtl">
       <Link href="/recipes" className="text-sm text-muted-foreground hover:text-foreground">
@@ -59,7 +63,10 @@ export default async function RecipeDetailPage({
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-bold">{recipe.title}</h1>
-          <Badge variant="outline">{sourceLabel(recipe.source_type)}</Badge>
+          <div className="flex gap-2 items-center">
+            {!isOwner && <Badge variant="secondary">משותף</Badge>}
+            <Badge variant="outline">{sourceLabel(recipe.source_type)}</Badge>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {recipe.tags.map((tag) => (
@@ -106,10 +113,12 @@ export default async function RecipeDetailPage({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Link href={`/recipes/${recipe.id}/edit`}>
-          <Button variant="outline" size="sm">עריכה</Button>
-        </Link>
+      <div className="flex gap-3 flex-wrap">
+        {isOwner && (
+          <Link href={`/recipes/${recipe.id}/edit`}>
+            <Button variant="outline" size="sm">עריכה</Button>
+          </Link>
+        )}
         {recipe.source_type !== 'manual' && (
           <Link href={`/recipes/${recipe.id}/source`}>
             <Button variant="outline" size="sm">הצג מקור</Button>
@@ -120,8 +129,9 @@ export default async function RecipeDetailPage({
             <Button variant="outline" size="sm">מקור מקורי</Button>
           </a>
         )}
+        <ShareButton recipeIds={[recipe.id]} />
         <ExportButton recipeIds={[recipe.id]} />
-        <DeleteRecipeButton recipeId={recipe.id} />
+        {isOwner && <DeleteRecipeButton recipeId={recipe.id} />}
       </div>
     </div>
   )

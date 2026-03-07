@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Heebo } from "next/font/google";
 import { RTLProvider } from "@/components/layout/direction-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const heebo = Heebo({
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="he" dir="rtl">
       <body className={`${heebo.variable} font-sans antialiased`}>
         <RTLProvider>{children}</RTLProvider>
+        <Toaster position="bottom-center" dir="rtl" />
       </body>
     </html>
   );

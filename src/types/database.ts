@@ -88,6 +88,52 @@ export interface Database {
           }
         ]
       }
+      recipe_shares: {
+        Row: {
+          id: string
+          recipe_id: string
+          owner_id: string
+          shared_with_user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipe_id: string
+          owner_id: string
+          shared_with_user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipe_id?: string
+          owner_id?: string
+          shared_with_user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_shares_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'recipes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_shares_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_shares_shared_with_user_id_fkey'
+            columns: ['shared_with_user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
