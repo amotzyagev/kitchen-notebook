@@ -9,7 +9,7 @@ export default async function RecipesPage() {
   const { data: recipes, error } = await supabase
     .from('recipes')
     .select('*')
-    .order('updated_at', { ascending: false })
+    .order('title', { ascending: true })
 
   if (error) {
     console.error('Failed to fetch recipes:', error)

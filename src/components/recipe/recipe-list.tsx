@@ -44,7 +44,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
         let query = supabase
           .from('recipes')
           .select('*')
-          .order('updated_at', { ascending: false })
+          .order('title', { ascending: true })
 
         if (searchQuery.trim()) {
           query = query.ilike('title', `%${searchQuery.trim()}%`)
