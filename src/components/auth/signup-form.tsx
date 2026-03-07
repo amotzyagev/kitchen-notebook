@@ -51,15 +51,8 @@ export function SignupForm() {
       return
     }
 
-    // Create user profile and notify admin
-    const { data: { user: newUser } } = await supabase.auth.getUser()
-    if (newUser) {
-      await fetch('/api/auth/on-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: newUser.id, email: values.email }),
-      }).catch(() => {}) // Don't block signup if notification fails
-    }
+    // Profile creation and admin notification are handled server-side
+    // by the auth callback route when the user confirms their email.
 
     setSuccess(true)
     setIsLoading(false)

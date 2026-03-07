@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseRecipeFile } from '@/lib/ai/parse-recipe-file'
+import { rateLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 export const maxDuration = 60
@@ -19,6 +20,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'unauthorized', message: 'יש להתחבר כדי להשתמש בתכונה זו' },
         { status: 401 }
+      )
+    }
+
+    // Rate limit check
+    const { success: withinLimit } = rateLimit(user.id, 10)
+    if (!withinLimit) {
+      return NextResponse.json(
+        { error: 'rate_limit', message: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
+        { status: 429 }
       )
     }
 

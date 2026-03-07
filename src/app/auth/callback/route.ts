@@ -26,7 +26,10 @@ export async function GET(request: Request) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin
           await fetch(`${appUrl}/api/auth/on-signup`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
+            },
             body: JSON.stringify({ userId: user.id, email: user.email }),
           }).catch((err) => console.error('[callback] on-signup call failed:', err))
         }

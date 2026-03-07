@@ -1,3 +1,4 @@
+import dns from 'node:dns'
 import * as cheerio from 'cheerio'
 import { anthropic } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
@@ -45,6 +46,61 @@ const SAVE_RECIPE_TOOL = {
     },
     required: ['title', 'ingredients', 'instructions', 'notes', 'tags', 'original_text', 'confidence', 'is_recipe'],
   },
+}
+
+function isPrivateIP(ip: string): boolean {
+  // IPv6 loopback and private
+  if (ip === '::1') return true
+  if (ip.startsWith('fc') || ip.startsWith('fd')) return true // fc00::/7
+
+  // Parse IPv4 (also handles IPv4-mapped IPv6 like ::ffff:127.0.0.1)
+  const v4Match = ip.match(/(?:::ffff:)?(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (!v4Match) return false
+
+  const [a, b] = [parseInt(v4Match[1], 10), parseInt(v4Match[2], 10)]
+
+  return (
+    a === 127 ||              // 127.0.0.0/8 loopback
+    a === 10 ||               // 10.0.0.0/8 private
+    (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12 private
+    (a === 192 && b === 168) ||          // 192.168.0.0/16 private
+    (a === 169 && b === 254) ||          // 169.254.0.0/16 link-local
+    a === 0                   // 0.0.0.0/8
+  )
+}
+
+async function validateUrl(url: string): Promise<void> {
+  const ERROR_MESSAGE = 'כתובת URL לא חוקית או חסומה'
+
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new Error(ERROR_MESSAGE)
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(ERROR_MESSAGE)
+  }
+
+  const hostname = parsed.hostname.toLowerCase()
+  if (hostname === 'localhost') {
+    throw new Error(ERROR_MESSAGE)
+  }
+
+  // Resolve hostname and check for private/reserved IPs
+  try {
+    const { address } = await dns.promises.lookup(hostname)
+    if (isPrivateIP(address)) {
+      throw new Error(ERROR_MESSAGE)
+    }
+  } catch (err) {
+    // Re-throw our own error; wrap DNS failures
+    if (err instanceof Error && err.message === ERROR_MESSAGE) {
+      throw err
+    }
+    throw new Error(ERROR_MESSAGE)
+  }
 }
 
 function extractJsonLdRecipe(html: string): SchemaOrgRecipe | null {
@@ -331,6 +387,8 @@ async function fetchFromWayback(url: string): Promise<string | null> {
 }
 
 export async function parseRecipeUrl(url: string): Promise<AIRecipeExtraction> {
+  await validateUrl(url)
+
   // Step 1: Try simple fetch first (fast, free, no external dependency)
   const html = await fetchSimple(url)
 

@@ -44,8 +44,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Also handle the actual resolved paths under (protected) group
-  const isProtectedRoute = pathname.startsWith('/recipes') || pathname.startsWith('/settings')
+  const isProtectedRoute = pathname.startsWith('/recipes') || pathname.startsWith('/settings') || pathname.startsWith('/api/recipes')
   if (!user && isProtectedRoute) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'לא מאומת' }, { status: 401 })
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -69,16 +72,25 @@ export async function middleware(request: NextRequest) {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
         fetch(`${appUrl}/api/auth/on-signup`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
+          },
           body: JSON.stringify({ userId: user.id, email: user.email }),
         }).catch(() => {})
         // Redirect to pending while profile is created
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'המשתמש ממתין לאישור' }, { status: 403 })
+        }
         const url = request.nextUrl.clone()
         url.pathname = '/pending-approval'
         return NextResponse.redirect(url)
       }
 
       if (!profile.approved) {
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'המשתמש ממתין לאישור' }, { status: 403 })
+        }
         const url = request.nextUrl.clone()
         url.pathname = '/pending-approval'
         return NextResponse.redirect(url)

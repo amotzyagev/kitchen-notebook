@@ -2,9 +2,24 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // Called after signup to create user profile and notify admin
 export async function POST(request: Request) {
   try {
+    // Verify internal secret to prevent unauthorized calls
+    const secret = request.headers.get('X-Internal-Secret')
+    if (!secret || secret !== process.env.INTERNAL_API_SECRET) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { userId, email } = await request.json()
     if (!userId || !email) {
       return NextResponse.json({ error: 'Missing userId or email' }, { status: 400 })
@@ -43,8 +58,8 @@ export async function POST(request: Request) {
           html: `
             <div dir="rtl" style="font-family: sans-serif;">
               <h2>משתמש חדש נרשם</h2>
-              <p><strong>אימייל:</strong> ${email}</p>
-              <p><a href="${appUrl}/admin/users">לחץ כאן לאישור או דחייה</a></p>
+              <p><strong>אימייל:</strong> ${escapeHtml(email)}</p>
+              <p><a href="${escapeHtml(appUrl)}/admin/users">לחץ כאן לאישור או דחייה</a></p>
             </div>
           `,
         })

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { parseUrlRequestSchema } from '@/lib/validators/api'
 import { parseRecipeUrl } from '@/lib/ai/parse-recipe-url'
 import { translateRecipe } from '@/lib/ai/translate'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 120
 
@@ -16,6 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'unauthorized', message: 'יש להתחבר כדי להשתמש בתכונה זו' },
         { status: 401 }
+      )
+    }
+
+    // Rate limit check
+    const { success: withinLimit } = rateLimit(user.id, 10)
+    if (!withinLimit) {
+      return NextResponse.json(
+        { error: 'rate_limit', message: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
+        { status: 429 }
       )
     }
 
