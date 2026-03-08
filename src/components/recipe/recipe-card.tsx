@@ -53,7 +53,7 @@ export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSele
       {coverImageUrl && (
         <>
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverImageUrl})` }} />
-          <div className="absolute inset-0 bg-background/80 dark:bg-background/85" />
+          <div className="absolute inset-0 bg-background/60 dark:bg-background/65" />
         </>
       )}
       <div
