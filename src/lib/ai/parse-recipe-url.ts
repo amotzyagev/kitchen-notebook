@@ -229,12 +229,24 @@ If the recipe has multiple stages or components (e.g., sauce, dough, filling, sa
     ],
   })
 
+  console.log('[ai] AI response received, stop_reason:', response.stop_reason)
+
   const toolUseBlock = response.content.find((block) => block.type === 'tool_use')
   if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+    console.error('[ai] No tool_use block in response:', JSON.stringify(response.content))
     throw new Error('AI did not return structured recipe data')
   }
 
-  return aiRecipeExtractionSchema.parse(toolUseBlock.input)
+  console.log('[ai] Tool input keys:', Object.keys(toolUseBlock.input as Record<string, unknown>))
+
+  const parsed = aiRecipeExtractionSchema.safeParse(toolUseBlock.input)
+  if (!parsed.success) {
+    console.error('[ai] Zod validation failed:', JSON.stringify(parsed.error.issues))
+    console.error('[ai] Raw input:', JSON.stringify(toolUseBlock.input))
+    throw parsed.error
+  }
+
+  return parsed.data
 }
 
 async function fetchSimple(url: string): Promise<string | null> {
