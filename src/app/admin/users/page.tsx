@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -67,6 +68,9 @@ export default function AdminUsersPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6" dir="rtl">
+      <Link href="/recipes" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        &rarr; חזרה למתכונים
+      </Link>
       <h1 className="text-2xl font-[var(--font-display)] text-primary">ניהול משתמשים</h1>
 
       {/* Pending */}
