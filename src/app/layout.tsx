@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Heebo, Secular_One } from "next/font/google";
 import { RTLProvider } from "@/components/layout/direction-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -15,11 +15,14 @@ const secularOne = Secular_One({
   subsets: ["hebrew", "latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#E85D2C",
+};
+
 export const metadata: Metadata = {
   title: "מחברת המתכונים",
   description: "פנקס המתכונים האישי שלך",
   manifest: "/manifest.json",
-  themeColor: "#E85D2C",
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
