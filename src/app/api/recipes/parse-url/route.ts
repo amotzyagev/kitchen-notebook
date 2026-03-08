@@ -91,7 +91,21 @@ export async function POST(request: Request) {
     console.log('[parse-url] Translating to Hebrew...')
     const translatedResult = await translateRecipe(extractedData)
 
-    // 5. Return translated result
+    // 5. Add source domain as a tag
+    try {
+      const hostname = new URL(url).hostname.replace(/^(www|mobile|m|app)\./, '')
+      // Extract site name: strip common TLDs and country codes
+      const domain = hostname
+        .replace(/\.(com|org|net|io|co|me|info|biz)?\.(il|uk|au|nz|za|in|br|de|fr|es|it|nl|se|no|dk|fi|jp|kr|cn|ru|pl|cz|at|ch|be|pt|ie|ca|mx|ar|cl|co|tv|ai)$/, '')
+        .replace(/\.(com|org|net|io|co|me|info|biz|dev|app|xyz|site|online|store|shop|blog|tech|design|agency|studio|media|cloud|space|world|life|live|news|today|pro|guru|works|solutions|digital|global|group|team|zone|plus|one|top|edu|gov|mil|int)$/, '')
+      if (domain && !translatedResult.tags.some(t => t.toLowerCase() === domain.toLowerCase())) {
+        translatedResult.tags.push(domain)
+      }
+    } catch {
+      // ignore invalid URL
+    }
+
+    // 6. Return translated result
     return NextResponse.json(translatedResult)
   } catch (error) {
     console.error('Parse URL error:', error)
