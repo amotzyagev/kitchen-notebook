@@ -88,6 +88,51 @@ export interface Database {
           }
         ]
       }
+      notebook_shares: {
+        Row: {
+          id: string
+          owner_id: string
+          shared_with_user_id: string
+          status: 'pending' | 'approved' | 'declined' | 'hidden'
+          created_at: string
+          updated_at: string
+          declined_at: string | null
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          shared_with_user_id: string
+          status?: 'pending' | 'approved' | 'declined' | 'hidden'
+          created_at?: string
+          updated_at?: string
+          declined_at?: string | null
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          shared_with_user_id?: string
+          status?: 'pending' | 'approved' | 'declined' | 'hidden'
+          created_at?: string
+          updated_at?: string
+          declined_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notebook_shares_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notebook_shares_shared_with_user_id_fkey'
+            columns: ['shared_with_user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       recipe_shares: {
         Row: {
           id: string

@@ -14,6 +14,7 @@ interface RecipeCardProps {
   selected?: boolean
   onSelect?: () => void
   isShared?: boolean
+  ownerName?: string
   index?: number
 }
 
@@ -39,7 +40,7 @@ function sourceIcon(type: Recipe['source_type']): string {
   }
 }
 
-export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, index = 0 }: RecipeCardProps) {
+export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, ownerName, index = 0 }: RecipeCardProps) {
   const ingredientPreview = recipe.ingredients.slice(0, 2).join(', ')
 
   const cardContent = (
@@ -72,7 +73,12 @@ export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, i
             {recipe.title}
           </CardTitle>
           <div className="flex items-center gap-1 shrink-0">
-            {isShared && (
+            {isShared && ownerName && (
+              <Badge variant="secondary" className="text-xs">
+                {ownerName}
+              </Badge>
+            )}
+            {isShared && !ownerName && (
               <Badge variant="secondary" className="text-xs">
                 משותף
               </Badge>

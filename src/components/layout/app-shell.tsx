@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +14,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, Plus } from 'lucide-react'
+import { ChevronDown, Plus, Share2, Bell, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/layout/bottom-nav'
+import { ShareNotebookDialog } from '@/components/notebook/share-notebook-dialog'
+import { PendingInvitations } from '@/components/notebook/pending-invitations'
+import { SharedNotebooksList } from '@/components/notebook/shared-notebooks-list'
+import { useNotebookShares } from '@/hooks/use-notebook-shares'
 
 interface AppShellProps {
   user: User
@@ -23,6 +29,10 @@ interface AppShellProps {
 
 export function AppShell({ user, children }: AppShellProps) {
   const router = useRouter()
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [pendingOpen, setPendingOpen] = useState(false)
+  const [sharedNotebooksOpen, setSharedNotebooksOpen] = useState(false)
+  const { pendingCount, fetchPending } = useNotebookShares()
 
   const displayName =
     user.user_metadata?.display_name || user.email || 'משתמש'
@@ -38,33 +48,62 @@ export function AppShell({ user, children }: AppShellProps) {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4">
           <Link href="/recipes" className="text-xl font-[var(--font-display)] text-primary tracking-wide hover:opacity-80 transition-opacity">מחברת המתכונים</Link>
-          <div className="hidden md:flex items-center gap-2">
-            <Button asChild variant="default" size="sm" className="gap-1.5">
-              <Link href="/recipes/new">
-                <Plus className="size-4" />
-                מתכון חדש
-              </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setPendingOpen(true)}
+              title="הזמנות ממתינות"
+            >
+              <Bell className="size-4" />
+              {pendingCount > 0 && (
+                <Badge className="absolute -top-1 -end-1 size-5 p-0 flex items-center justify-center text-[10px]">
+                  {pendingCount}
+                </Badge>
+              )}
             </Button>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1">
-                {displayName}
-                <ChevronDown className="size-3.5 opacity-60" />
+            <div className="hidden md:flex items-center gap-2">
+              <Button asChild variant="default" size="sm" className="gap-1.5">
+                <Link href="/recipes/new">
+                  <Plus className="size-4" />
+                  מתכון חדש
+                </Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{displayName}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                התנתק
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  {displayName}
+                  <ChevronDown className="size-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{displayName}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                  <Share2 className="size-4 me-2" />
+                  שתף את המחברת
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSharedNotebooksOpen(true)}>
+                  <BookOpen className="size-4 me-2" />
+                  מחברות משותפות
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  התנתק
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
       <BottomNav />
+
+      <ShareNotebookDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
+      <PendingInvitations open={pendingOpen} onOpenChange={(open) => { setPendingOpen(open); if (!open) fetchPending() }} />
+      <SharedNotebooksList open={sharedNotebooksOpen} onOpenChange={setSharedNotebooksOpen} />
     </div>
   )
 }
