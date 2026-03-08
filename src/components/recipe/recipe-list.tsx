@@ -32,11 +32,13 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
 
   const supabase = useMemo(() => createClient(), [])
 
-  // Collect all distinct tags from initial recipes
+  // Collect all distinct tags from initial recipes, sorted by popularity
   const allTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    initialRecipes.forEach((r) => r.tags.forEach((t) => tagSet.add(t)))
-    return Array.from(tagSet).sort()
+    const tagCount = new Map<string, number>()
+    initialRecipes.forEach((r) => r.tags.forEach((t) => tagCount.set(t, (tagCount.get(t) || 0) + 1)))
+    return Array.from(tagCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag]) => tag)
   }, [initialRecipes])
 
   useEffect(() => {
@@ -152,7 +154,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
       </div>
 
       {/* Tag filters + shared filter */}
-      <div className={cn('flex flex-wrap gap-2', !tagsExpanded && 'max-h-[4.5rem] overflow-hidden')}>
+      <div className={cn('flex flex-wrap gap-2', !tagsExpanded && 'max-h-[3rem] overflow-hidden')}>
         {currentUserId && (
           <Badge
             variant={showSharedOnly ? 'default' : 'outline'}
