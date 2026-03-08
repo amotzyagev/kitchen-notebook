@@ -1,10 +1,16 @@
 import { z } from 'zod';
 
+// Coerce a value that may be a single string into an array of strings
+const stringOrArray = z.union([
+  z.array(z.string()),
+  z.string().transform((s) => s.split('\n').map((l) => l.trim()).filter(Boolean)),
+]);
+
 // Claude tool use output schema
 export const aiRecipeExtractionSchema = z.object({
   title: z.string(),
-  ingredients: z.array(z.string()),
-  instructions: z.array(z.string()),
+  ingredients: stringOrArray,
+  instructions: stringOrArray,
   notes: z.string(),
   tags: z.array(z.string()).default([]),
   original_text: z.string(),
