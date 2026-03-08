@@ -44,10 +44,20 @@ export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, i
 
   const cardContent = (
     <Card
-      className={`card-animate h-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${selected ? 'ring-2 ring-primary' : ''}`}
+      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${selected ? 'ring-2 ring-primary' : ''}`}
       style={{ animationDelay: `${index * 50}ms` }}
       dir="rtl"
     >
+      <div
+        className="h-1.5 rounded-t-[inherit]"
+        style={{
+          backgroundColor:
+            recipe.source_type === 'link' ? 'var(--chart-2)'
+            : recipe.source_type === 'image' ? 'var(--chart-4)'
+            : recipe.source_type === 'import' ? 'var(--chart-3)'
+            : 'var(--chart-1)'
+        }}
+      />
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           {selectable && (

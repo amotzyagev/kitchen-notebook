@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { CheckSquare, Share2, Printer, X } from 'lucide-react'
+import { CheckSquare, Share2, Printer, X, ChevronDown, ChevronUp, Link2, Camera, FileText, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { RecipeCard } from './recipe-card'
 import { ShareDialog } from './share-dialog'
 import { createClient } from '@/lib/supabase/client'
@@ -27,6 +28,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [showSharedOnly, setShowSharedOnly] = useState(false)
+  const [tagsExpanded, setTagsExpanded] = useState(false)
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -77,13 +79,31 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
 
   if (initialRecipes.length === 0 && !searchQuery && !selectedTag) {
     return (
-      <div className="text-center py-12 space-y-4" dir="rtl">
-        <p className="text-muted-foreground text-lg">
-          אין מתכונים עדיין — הוסף את הראשון!
-        </p>
-        <Link href="/recipes/new">
-          <Button>הוסף מתכון</Button>
-        </Link>
+      <div className="text-center py-12 space-y-6" dir="rtl">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">ברוכים הבאים למחברת המתכונים!</h2>
+          <p className="text-muted-foreground">
+            הוסיפו את המתכון הראשון שלכם באחת הדרכים:
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-sm">
+          <Link href="/recipes/new?tab=link" className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors">
+            <Link2 className="size-6 text-primary" />
+            <span>הדבקת קישור</span>
+          </Link>
+          <Link href="/recipes/new?tab=photo" className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors">
+            <Camera className="size-6 text-primary" />
+            <span>צילום מתכון</span>
+          </Link>
+          <Link href="/recipes/new?tab=text" className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors">
+            <FileText className="size-6 text-primary" />
+            <span>טקסט חופשי</span>
+          </Link>
+          <Link href="/recipes/new?tab=file" className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors">
+            <Upload className="size-6 text-primary" />
+            <span>ייבוא קובץ</span>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -132,7 +152,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
       </div>
 
       {/* Tag filters + shared filter */}
-      <div className="flex flex-wrap gap-2">
+      <div className={cn('flex flex-wrap gap-2', !tagsExpanded && 'max-h-[4.5rem] overflow-hidden')}>
         {currentUserId && (
           <Badge
             variant={showSharedOnly ? 'default' : 'outline'}
@@ -153,6 +173,18 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
           </Badge>
         ))}
       </div>
+      {allTags.length > 6 && (
+        <button
+          onClick={() => setTagsExpanded(!tagsExpanded)}
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          {tagsExpanded ? (
+            <><ChevronUp className="size-3" /> פחות</>
+          ) : (
+            <><ChevronDown className="size-3" /> עוד תגיות...</>
+          )}
+        </button>
+      )}
 
       {/* Results */}
       {isSearching ? (

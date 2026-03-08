@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { RecipeForm } from '@/components/recipe/recipe-form'
 import { PhotoUpload } from '@/components/recipe/photo-upload'
@@ -15,9 +15,10 @@ import type { RecipeForm as RecipeFormType } from '@/lib/validators/recipe'
 
 export default function NewRecipePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { createRecipe, uploadRecipeImage, updateRecipe } = useRecipes()
   const [isLoading, setIsLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('link')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'link')
 
   // Extracted data from AI
   const [extractedData, setExtractedData] = useState<AIRecipeExtraction | null>(null)

@@ -132,6 +132,8 @@ export default async function RecipeDetailPage({
         )}
         <ShareButton recipeIds={[recipe.id]} />
         <ExportButton recipeIds={[recipe.id]} />
+      </div>
+      <div className="flex gap-3 pt-2 border-t border-border">
         {isOwner && <DeleteRecipeButton recipeId={recipe.id} />}
         {!isOwner && <RemoveSharedRecipeButton recipeId={recipe.id} />}
       </div>

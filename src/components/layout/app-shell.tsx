@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ChevronDown } from 'lucide-react'
 import { BottomNav } from '@/components/layout/bottom-nav'
 
 interface AppShellProps {
@@ -38,8 +39,9 @@ export function AppShell({ user, children }: AppShellProps) {
           <h1 className="text-xl font-[var(--font-display)] text-primary tracking-wide">מחברת המתכונים</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="gap-1">
                 {displayName}
+                <ChevronDown className="size-3.5 opacity-60" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -52,7 +54,7 @@ export function AppShell({ user, children }: AppShellProps) {
           </DropdownMenu>
         </div>
       </header>
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1 pb-20 md:pb-0">{children}</main>
       <BottomNav />
     </div>
   )
