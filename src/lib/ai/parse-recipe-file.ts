@@ -1,3 +1,4 @@
+import WordExtractor from 'word-extractor'
 import { extractWithAI } from './parse-recipe-url'
 import { parseRecipeImage } from './parse-recipe-image'
 import { isHebrew } from './translate'
@@ -27,21 +28,15 @@ async function extractTextFromDocx(base64: string): Promise<string> {
   return result.value
 }
 
-function extractTextFromDoc(base64: string): string {
-  // Lightweight .doc text extraction without word-extractor (which crashes Vercel serverless).
-  // Old .doc (OLE2/CFB) files store text as UTF-16LE. We scan for readable character runs.
+async function extractTextFromDoc(base64: string): Promise<string> {
+  console.log('[parse-file] Extracting text from .doc with word-extractor')
+  const extractor = new WordExtractor()
   const buffer = Buffer.from(base64, 'base64')
-  const text = buffer.toString('utf16le')
-  // Extract runs of readable characters (Hebrew, Latin, digits, punctuation, whitespace)
-  const pattern = /[\u0020-\u007E\u00A0-\u00FF\u0590-\u05FF\u200E\u200F\n\r\t]{4,}/g
-  const runs = text.match(pattern)
-  if (!runs || runs.length === 0) {
-    // Fallback: try UTF-8
-    const utf8Text = buffer.toString('utf-8')
-    const utf8Runs = utf8Text.match(pattern)
-    return utf8Runs ? utf8Runs.join('\n') : ''
-  }
-  return runs.join('\n')
+  console.log('[parse-file] Buffer size:', buffer.length)
+  const doc = await extractor.extract(buffer)
+  const body = doc.getBody()
+  console.log('[parse-file] Extracted .doc text length:', body.length)
+  return body
 }
 
 export async function parseRecipeFile(
@@ -73,13 +68,21 @@ export async function parseRecipeFile(
   }
 
   // Extract recipe with AI
+  console.log('[parse-file] Sending to AI, text length:', text.length)
   const extraction = await extractWithAI(text)
+  console.log('[parse-file] AI extraction done, title:', extraction.title)
 
   // Translate if not Hebrew
   const sampleText = [extraction.title, ...extraction.ingredients.slice(0, 3)].join(' ')
-  if (!isHebrew(sampleText)) {
-    return translateRecipe(extraction)
+  const hebrew = isHebrew(sampleText)
+  console.log('[parse-file] isHebrew:', hebrew, '| sample:', sampleText.slice(0, 100))
+  if (!hebrew) {
+    console.log('[parse-file] Starting translation...')
+    const translated = await translateRecipe(extraction)
+    console.log('[parse-file] Translation done')
+    return translated
   }
 
+  console.log('[parse-file] Returning extraction (no translation needed)')
   return extraction
 }
