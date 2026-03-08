@@ -92,8 +92,12 @@ export function FileImport() {
         })
 
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.message || 'שגיאה בעיבוד הקובץ')
+          const contentType = response.headers.get('content-type') || ''
+          if (contentType.includes('application/json')) {
+            const err = await response.json()
+            throw new Error(err.message || 'שגיאה בעיבוד הקובץ')
+          }
+          throw new Error('שגיאה בעיבוד הקובץ')
         }
 
         const extraction: AIRecipeExtraction = await response.json()
