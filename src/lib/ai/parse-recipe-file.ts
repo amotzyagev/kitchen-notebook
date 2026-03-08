@@ -29,16 +29,16 @@ async function extractTextFromDocx(base64: string): Promise<string> {
 
 function extractTextFromDoc(base64: string): string {
   // Lightweight .doc text extraction without word-extractor (which crashes Vercel serverless).
-  // Old .doc (OLE2/CFB) files embed readable text runs. We extract them by scanning for
-  // sequences of printable characters (ASCII + Hebrew Unicode range).
+  // Old .doc (OLE2/CFB) files store text as UTF-16LE. We scan for readable character runs.
   const buffer = Buffer.from(base64, 'base64')
   const text = buffer.toString('utf16le')
   // Extract runs of readable characters (Hebrew, Latin, digits, punctuation, whitespace)
-  const runs = text.match(/[\u0020-\u007E\u00A0-\u00FF\u0590-\u05FF\u200E\u200F\n\r\t]{10,}/g)
+  const pattern = /[\u0020-\u007E\u00A0-\u00FF\u0590-\u05FF\u200E\u200F\n\r\t]{4,}/g
+  const runs = text.match(pattern)
   if (!runs || runs.length === 0) {
     // Fallback: try UTF-8
     const utf8Text = buffer.toString('utf-8')
-    const utf8Runs = utf8Text.match(/[\u0020-\u007E\u00A0-\u00FF\u0590-\u05FF\u200E\u200F\n\r\t]{10,}/g)
+    const utf8Runs = utf8Text.match(pattern)
     return utf8Runs ? utf8Runs.join('\n') : ''
   }
   return runs.join('\n')
