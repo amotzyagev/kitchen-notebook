@@ -12,7 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
+import Link from 'next/link'
 import { BottomNav } from '@/components/layout/bottom-nav'
 
 interface AppShellProps {
@@ -36,7 +37,15 @@ export function AppShell({ user, children }: AppShellProps) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4">
-          <h1 className="text-xl font-[var(--font-display)] text-primary tracking-wide">מחברת המתכונים</h1>
+          <Link href="/recipes" className="text-xl font-[var(--font-display)] text-primary tracking-wide hover:opacity-80 transition-opacity">מחברת המתכונים</Link>
+          <div className="hidden md:flex items-center gap-2">
+            <Button asChild variant="default" size="sm" className="gap-1.5">
+              <Link href="/recipes/new">
+                <Plus className="size-4" />
+                מתכון חדש
+              </Link>
+            </Button>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-1">
