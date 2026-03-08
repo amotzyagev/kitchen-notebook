@@ -32,6 +32,7 @@ export function RecipeList({ initialRecipes, currentUserId, ownerMap = {} }: Rec
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [showSharedOnly, setShowSharedOnly] = useState(false)
   const [tagsExpanded, setTagsExpanded] = useState(false)
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -77,6 +78,37 @@ export function RecipeList({ initialRecipes, currentUserId, ownerMap = {} }: Rec
 
     return () => clearTimeout(timer)
   }, [searchQuery, selectedTag, showSharedOnly, currentUserId, supabase])
+
+  // Generate signed URLs for recipe cover images
+  useEffect(() => {
+    const recipesWithCovers = recipes.filter((r) => r.cover_image_path)
+    if (recipesWithCovers.length === 0) {
+      setCoverUrls({})
+      return
+    }
+
+    async function fetchCoverUrls() {
+      try {
+        const results = await Promise.all(
+          recipesWithCovers.map(async (recipe) => {
+            const { data } = await supabase.storage
+              .from('recipe-images')
+              .createSignedUrl(recipe.cover_image_path!, 3600)
+            return { id: recipe.id, url: data?.signedUrl }
+          })
+        )
+        const urlMap: Record<string, string> = {}
+        for (const r of results) {
+          if (r.url) urlMap[r.id] = r.url
+        }
+        setCoverUrls(urlMap)
+      } catch (error) {
+        console.error('Failed to generate cover image URLs:', error)
+      }
+    }
+
+    fetchCoverUrls()
+  }, [recipes, supabase])
 
   function handleTagClick(tag: string) {
     setSelectedTag((prev) => (prev === tag ? null : tag))
@@ -215,6 +247,7 @@ export function RecipeList({ initialRecipes, currentUserId, ownerMap = {} }: Rec
               selectable={selectionMode}
               selected={selectedIds.has(recipe.id)}
               onSelect={() => toggleSelection(recipe.id)}
+              coverImageUrl={coverUrls[recipe.id]}
               isShared={!!currentUserId && recipe.user_id !== currentUserId}
               ownerName={currentUserId && recipe.user_id !== currentUserId ? ownerMap[recipe.user_id]?.name : undefined}
             />

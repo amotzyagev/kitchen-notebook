@@ -10,6 +10,7 @@ type Recipe = Database['public']['Tables']['recipes']['Row']
 
 interface RecipeCardProps {
   recipe: Recipe
+  coverImageUrl?: string
   selectable?: boolean
   selected?: boolean
   onSelect?: () => void
@@ -40,17 +41,23 @@ function sourceIcon(type: Recipe['source_type']): string {
   }
 }
 
-export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, ownerName, index = 0 }: RecipeCardProps) {
+export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSelect, isShared, ownerName, index = 0 }: RecipeCardProps) {
   const ingredientPreview = recipe.ingredients.slice(0, 2).join(', ')
 
   const cardContent = (
     <Card
-      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${selected ? 'ring-2 ring-primary' : ''}`}
+      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${coverImageUrl ? 'relative' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
       style={{ animationDelay: `${index * 50}ms` }}
       dir="rtl"
     >
+      {coverImageUrl && (
+        <>
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverImageUrl})` }} />
+          <div className="absolute inset-0 bg-background/80 dark:bg-background/85" />
+        </>
+      )}
       <div
-        className="h-1.5 rounded-t-[inherit]"
+        className={`h-1.5 rounded-t-[inherit] ${coverImageUrl ? 'relative z-10' : ''}`}
         style={{
           backgroundColor:
             recipe.source_type === 'link' ? 'var(--chart-2)'
@@ -59,7 +66,7 @@ export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, o
             : 'var(--chart-1)'
         }}
       />
-      <CardHeader>
+      <CardHeader className={coverImageUrl ? 'relative z-10' : ''}>
         <div className="flex items-center justify-between gap-2">
           {selectable && (
             <Checkbox
@@ -95,7 +102,7 @@ export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, o
         )}
       </CardHeader>
       {recipe.tags.length > 0 && (
-        <CardContent>
+        <CardContent className={coverImageUrl ? 'relative z-10' : ''}>
           <div className="flex flex-wrap gap-1">
             {recipe.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">
@@ -105,7 +112,7 @@ export function RecipeCard({ recipe, selectable, selected, onSelect, isShared, o
           </div>
         </CardContent>
       )}
-      <CardFooter>
+      <CardFooter className={coverImageUrl ? 'relative z-10' : ''}>
         <span className="text-xs text-muted-foreground">
           {formatDate(recipe.updated_at)}
         </span>

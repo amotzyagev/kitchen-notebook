@@ -16,6 +16,7 @@ export const recipeInsertSchema = recipeFormSchema.extend({
   source_type: sourceTypeSchema,
   source_url: z.string().url().max(2000).optional(),
   source_image_path: z.string().max(500).optional(),
+  cover_image_path: z.string().max(500).nullable().optional(),
   original_text: z.string().max(100000).optional(),
 }).refine(
   (data) => data.source_type !== 'link' || (data.source_url != null && data.source_url.length > 0),
@@ -34,6 +35,7 @@ export const recipeSchema = z.object({
   source_type: sourceTypeSchema,
   source_url: z.string().url().max(2000).optional(),
   source_image_path: z.string().max(500).optional(),
+  cover_image_path: z.string().max(500).nullable(),
   original_text: z.string().max(100000).optional(),
   created_at: z.string(),
   updated_at: z.string(),

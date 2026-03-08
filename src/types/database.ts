@@ -15,6 +15,7 @@ export interface Database {
           source_type: 'manual' | 'link' | 'image' | 'import'
           source_url: string | null
           source_image_path: string | null
+          cover_image_path: string | null
           tags: string[]
           created_at: string
           updated_at: string
@@ -30,6 +31,7 @@ export interface Database {
           source_type?: 'manual' | 'link' | 'image' | 'import'
           source_url?: string | null
           source_image_path?: string | null
+          cover_image_path?: string | null
           tags?: string[]
           created_at?: string
           updated_at?: string
@@ -45,6 +47,7 @@ export interface Database {
           source_type?: 'manual' | 'link' | 'image' | 'import'
           source_url?: string | null
           source_image_path?: string | null
+          cover_image_path?: string | null
           tags?: string[]
           created_at?: string
           updated_at?: string

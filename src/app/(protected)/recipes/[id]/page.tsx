@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { DeleteRecipeButton } from '@/components/recipe/delete-recipe-button'
 import { RemoveSharedRecipeButton } from '@/components/recipe/remove-shared-recipe-button'
 import { ExportButton } from '@/components/recipe/export-button'
 import { ShareButton } from '@/components/recipe/share-button'
+import { CoverImageUpload } from '@/components/recipe/cover-image-upload'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('he-IL', {
@@ -54,6 +56,14 @@ export default async function RecipeDetailPage({
   const { data: { user } } = await supabase.auth.getUser()
   const isOwner = user?.id === recipe.user_id
 
+  let coverImageUrl: string | undefined
+  if (recipe.cover_image_path) {
+    const { data: coverData } = await supabase.storage
+      .from('recipe-images')
+      .createSignedUrl(recipe.cover_image_path, 3600)
+    coverImageUrl = coverData?.signedUrl
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6" dir="rtl">
       <Link href="/recipes" className="text-sm text-muted-foreground hover:text-foreground">
@@ -77,6 +87,12 @@ export default async function RecipeDetailPage({
           ))}
         </div>
       </div>
+
+      {coverImageUrl && (
+        <div className="relative w-full h-64 rounded-lg overflow-hidden">
+          <Image src={coverImageUrl} alt={recipe.title} fill className="object-cover" unoptimized />
+        </div>
+      )}
 
       <Separator />
 
@@ -133,6 +149,9 @@ export default async function RecipeDetailPage({
         <ShareButton recipeIds={[recipe.id]} />
         <ExportButton recipeIds={[recipe.id]} />
       </div>
+      {isOwner && (
+        <CoverImageUpload recipeId={recipe.id} hasCoverImage={!!recipe.cover_image_path} />
+      )}
       <div className="flex gap-3 pt-2 border-t border-border">
         {isOwner && <DeleteRecipeButton recipeId={recipe.id} />}
         {!isOwner && <RemoveSharedRecipeButton recipeId={recipe.id} />}
