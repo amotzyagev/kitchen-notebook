@@ -155,15 +155,6 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
 
       {/* Tag filters + shared filter */}
       <div className={cn('flex flex-wrap gap-2', !tagsExpanded && 'max-h-[3rem] overflow-hidden')}>
-        {currentUserId && (
-          <Badge
-            variant={showSharedOnly ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setShowSharedOnly((prev) => !prev)}
-          >
-            שותפו איתי
-          </Badge>
-        )}
         {allTags.map((tag) => (
           <Badge
             key={tag}
@@ -174,6 +165,15 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
             {tag}
           </Badge>
         ))}
+        {currentUserId && (
+          <Badge
+            variant={showSharedOnly ? 'default' : 'outline'}
+            className="cursor-pointer"
+            onClick={() => setShowSharedOnly((prev) => !prev)}
+          >
+            שותפו איתי
+          </Badge>
+        )}
       </div>
       {allTags.length > 6 && (
         <button
