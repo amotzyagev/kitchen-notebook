@@ -93,11 +93,15 @@ export function FileImport() {
 
         if (!response.ok) {
           const contentType = response.headers.get('content-type') || ''
+          console.error('[file-import] HTTP error:', response.status, response.statusText, 'content-type:', contentType)
           if (contentType.includes('application/json')) {
             const err = await response.json()
+            console.error('[file-import] Error body:', err)
             throw new Error(err.message || 'שגיאה בעיבוד הקובץ')
           }
-          throw new Error('שגיאה בעיבוד הקובץ')
+          const text = await response.text()
+          console.error('[file-import] Non-JSON error body:', text.slice(0, 500))
+          throw new Error(`שגיאה בעיבוד הקובץ (${response.status})`)
         }
 
         const extraction: AIRecipeExtraction = await response.json()
@@ -116,6 +120,7 @@ export function FileImport() {
           idx === i ? { ...f, status: 'success' as const, recipe: extraction } : f
         ))
       } catch (err) {
+        console.error('[file-import] Error for file:', files[i].file.name, err)
         const message = err instanceof Error ? err.message : 'שגיאה לא ידועה'
         setFiles(prev => prev.map((f, idx) =>
           idx === i ? { ...f, status: 'failed' as const, error: message } : f

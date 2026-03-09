@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['word-extractor'],
+  serverExternalPackages: ['word-extractor', 'mammoth'],
 };
 
 export default nextConfig;
