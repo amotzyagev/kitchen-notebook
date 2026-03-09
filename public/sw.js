@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kitchen-notebook-v1';
+const CACHE_NAME = 'kitchen-notebook-v2';
 
 const APP_SHELL = [
   '/',
@@ -33,7 +33,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Network-first for API calls and navigation
+  // Skip non-GET requests (Cache API doesn't support POST, etc.)
+  if (request.method !== 'GET') return;
+
+  // Network-first for navigation and API calls
   if (request.mode === 'navigate' || url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
