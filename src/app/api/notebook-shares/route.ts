@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createAdminClient, resolveUserDisplayInfo } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
+import { ERROR_RATE_LIMIT, ERROR_SERVER } from '@/lib/constants/error-messages'
 
 const shareSchema = z.object({
   email: z.string().email('כתובת אימייל לא תקינה'),
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
     const { success: withinLimit } = rateLimit(user.id, 20)
     if (!withinLimit) {
       return NextResponse.json(
-        { error: 'rate_limit', message: 'יותר מדי בקשות. נסו שוב בעוד דקה.' },
+        { error: 'rate_limit', message: ERROR_RATE_LIMIT },
         { status: 429 }
       )
     }
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('[notebook-shares] Error:', error)
     return NextResponse.json(
-      { error: 'server_error', message: 'שגיאה בשרת' },
+      { error: 'server_error', message: ERROR_SERVER },
       { status: 500 }
     )
   }
@@ -162,7 +163,7 @@ export async function GET() {
   } catch (error) {
     console.error('[notebook-shares] Error:', error)
     return NextResponse.json(
-      { error: 'server_error', message: 'שגיאה בשרת' },
+      { error: 'server_error', message: ERROR_SERVER },
       { status: 500 }
     )
   }

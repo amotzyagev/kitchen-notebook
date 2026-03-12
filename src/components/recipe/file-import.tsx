@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useRecipes } from '@/hooks/use-recipes'
+import { fileToBase64 } from '@/lib/utils/file-utils'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 type FileStatus = 'pending' | 'processing' | 'success' | 'failed'
@@ -53,19 +54,6 @@ export function FileImport() {
   function clearAll() {
     setFiles([])
     setDone(false)
-  }
-
-  async function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        const base64 = result.split(',')[1]
-        resolve(base64)
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
   }
 
   async function startImport() {

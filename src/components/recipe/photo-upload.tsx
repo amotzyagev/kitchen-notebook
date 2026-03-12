@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Camera, Loader2 } from 'lucide-react'
+import { fileToBase64 } from '@/lib/utils/file-utils'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 interface PhotoUploadProps {
@@ -32,17 +33,7 @@ export function PhotoUpload({ onExtracted, onError }: PhotoUploadProps) {
       })
 
       // Convert to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const result = reader.result as string
-          // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
-          const base64Data = result.split(',')[1]
-          resolve(base64Data)
-        }
-        reader.onerror = reject
-        reader.readAsDataURL(compressed)
-      })
+      const base64 = await fileToBase64(compressed)
 
       // Determine media type
       const mediaType = compressed.type as 'image/jpeg' | 'image/png' | 'image/webp'

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { resolveUserDisplayInfo } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/api-utils'
+import { ERROR_SERVER } from '@/lib/constants/error-messages'
 
 export async function GET() {
   try {
@@ -41,7 +42,7 @@ export async function GET() {
   } catch (error) {
     console.error('[notebook-shares/received] Error:', error)
     return NextResponse.json(
-      { error: 'server_error', message: 'שגיאה בשרת' },
+      { error: 'server_error', message: ERROR_SERVER },
       { status: 500 }
     )
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/api-utils'
+import { ERROR_SERVER } from '@/lib/constants/error-messages'
 
 const actionSchema = z.object({
   action: z.enum(['approve', 'decline', 'hide', 'unhide']),
@@ -99,7 +100,7 @@ export async function PATCH(
   } catch (error) {
     console.error('[notebook-shares/[id]] Error:', error)
     return NextResponse.json(
-      { error: 'server_error', message: 'שגיאה בשרת' },
+      { error: 'server_error', message: ERROR_SERVER },
       { status: 500 }
     )
   }
@@ -154,7 +155,7 @@ export async function DELETE(
   } catch (error) {
     console.error('[notebook-shares/[id]] Error:', error)
     return NextResponse.json(
-      { error: 'server_error', message: 'שגיאה בשרת' },
+      { error: 'server_error', message: ERROR_SERVER },
       { status: 500 }
     )
   }

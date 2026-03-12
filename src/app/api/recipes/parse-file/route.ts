@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { parseRecipeFile } from '@/lib/ai/parse-recipe-file'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
+import { ERROR_RATE_LIMIT, errorNotARecipeFile } from '@/lib/constants/error-messages'
 import { z } from 'zod'
 
 export const maxDuration = 60
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     const { success: withinLimit } = rateLimit(user.id, 10)
     if (!withinLimit) {
       return NextResponse.json(
-        { error: 'rate_limit', message: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
+        { error: 'rate_limit', message: ERROR_RATE_LIMIT },
         { status: 429 }
       )
     }
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
     if (!result.is_recipe) {
       return NextResponse.json(
-        { error: 'not_a_recipe', message: `לא זיהיתי מתכון בקובץ: ${filename}` },
+        { error: 'not_a_recipe', message: errorNotARecipeFile(filename) },
         { status: 422 }
       )
     }

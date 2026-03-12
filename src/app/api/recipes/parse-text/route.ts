@@ -4,6 +4,7 @@ import { translateRecipe } from '@/lib/ai/translate'
 import { isHebrew } from '@/lib/ai/translate'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
+import { ERROR_RATE_LIMIT, ERROR_NOT_A_RECIPE_TEXT } from '@/lib/constants/error-messages'
 import { z } from 'zod'
 
 export const maxDuration = 60
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     const { success: withinLimit } = rateLimit(user.id, 10)
     if (!withinLimit) {
       return NextResponse.json(
-        { error: 'rate_limit', message: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
+        { error: 'rate_limit', message: ERROR_RATE_LIMIT },
         { status: 429 }
       )
     }
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
 
     if (!extraction.is_recipe) {
       return NextResponse.json(
-        { error: 'not_a_recipe', message: 'לא זיהיתי מתכון בטקסט' },
+        { error: 'not_a_recipe', message: ERROR_NOT_A_RECIPE_TEXT },
         { status: 422 }
       )
     }

@@ -4,6 +4,7 @@ import { parseRecipeUrl } from '@/lib/ai/parse-recipe-url'
 import { translateRecipe } from '@/lib/ai/translate'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
+import { ERROR_RATE_LIMIT } from '@/lib/constants/error-messages'
 
 export const maxDuration = 120
 
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     const { success: withinLimit } = rateLimit(user.id, 10)
     if (!withinLimit) {
       return NextResponse.json(
-        { error: 'rate_limit', message: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
+        { error: 'rate_limit', message: ERROR_RATE_LIMIT },
         { status: 429 }
       )
     }

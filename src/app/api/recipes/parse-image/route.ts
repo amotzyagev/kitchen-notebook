@@ -3,6 +3,7 @@ import { parseImageRequestSchema } from '@/lib/validators/api'
 import { parseRecipeImage } from '@/lib/ai/parse-recipe-image'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
+import { ERROR_RATE_LIMIT, ERROR_NOT_A_RECIPE_IMAGE } from '@/lib/constants/error-messages'
 
 export const maxDuration = 120
 
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
     const { success: withinLimit } = rateLimit(user.id, 10)
     if (!withinLimit) {
       return NextResponse.json(
-        { error: 'rate_limit', message: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
+        { error: 'rate_limit', message: ERROR_RATE_LIMIT },
         { status: 429 }
       )
     }
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     // 6. Check if it's actually a recipe
     if (!result.is_recipe) {
       return NextResponse.json(
-        { error: 'not_a_recipe', message: 'לא זיהיתי מתכון בתמונה' },
+        { error: 'not_a_recipe', message: ERROR_NOT_A_RECIPE_IMAGE },
         { status: 422 }
       )
     }

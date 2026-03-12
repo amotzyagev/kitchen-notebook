@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-utils'
+import { ERROR_SERVER } from '@/lib/constants/error-messages'
 
 export async function POST(
   _request: Request,
@@ -29,7 +30,7 @@ export async function POST(
   } catch (error) {
     console.error('[unshare] Error:', error)
     return NextResponse.json(
-      { error: 'server_error', message: 'שגיאה בשרת' },
+      { error: 'server_error', message: ERROR_SERVER },
       { status: 500 }
     )
   }
