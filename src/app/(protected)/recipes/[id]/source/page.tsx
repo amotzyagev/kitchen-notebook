@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SourceComparison } from '@/components/recipe/source-comparison'
+import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 export default async function SourcePage({
   params,
@@ -30,7 +31,7 @@ export default async function SourcePage({
 
   if (recipe.source_type === 'image' && recipe.source_image_path) {
     const { data } = await supabase.storage
-      .from('recipe-images')
+      .from(RECIPE_IMAGES_BUCKET)
       .createSignedUrl(recipe.source_image_path, 3600)
 
     if (data?.signedUrl) {

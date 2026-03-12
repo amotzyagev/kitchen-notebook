@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
+import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 type RecipeInsert = Database['public']['Tables']['recipes']['Insert']
 type RecipeRow = Database['public']['Tables']['recipes']['Row']
@@ -33,7 +34,7 @@ export function useRecipes() {
   ): Promise<string> {
     const path = `${userId}/${recipeId}/${file.name}`
     const { error } = await supabase.storage
-      .from('recipe-images')
+      .from(RECIPE_IMAGES_BUCKET)
       .upload(path, file)
     if (error) throw error
     return path
@@ -61,7 +62,7 @@ export function useRecipes() {
     // Delete image from storage if exists
     if (recipe?.source_image_path) {
       await supabase.storage
-        .from('recipe-images')
+        .from(RECIPE_IMAGES_BUCKET)
         .remove([recipe.source_image_path])
     }
 

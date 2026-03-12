@@ -2,6 +2,7 @@ import { anthropic, MODEL_SONNET_DATED, AI_MAX_TOKENS } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 import { translateRecipe, isHebrew } from './translate'
 import { SAVE_RECIPE_TOOL } from './tools'
+import type { ValidImageType } from '@/lib/constants/image'
 
 async function ocrWithGoogleVision(imageBase64: string): Promise<string | null> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
@@ -51,7 +52,7 @@ async function ocrWithGoogleVision(imageBase64: string): Promise<string | null> 
 
 async function ocrWithClaude(
   imageBase64: string,
-  mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
+  mediaType: ValidImageType
 ): Promise<string> {
   console.log('[parse-image] Step 1: OCR with Claude Vision (fallback)')
   const response = await anthropic.messages.create({
@@ -97,7 +98,7 @@ async function ocrWithClaude(
 
 async function ocrImage(
   imageBase64: string,
-  mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
+  mediaType: ValidImageType
 ): Promise<string> {
   // Try Google Cloud Vision first (better Hebrew accuracy)
   const googleResult = await ocrWithGoogleVision(imageBase64)
@@ -143,7 +144,7 @@ async function extractRecipeFromText(ocrText: string): Promise<AIRecipeExtractio
 
 export async function parseRecipeImage(
   imageBase64: string,
-  mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
+  mediaType: ValidImageType
 ): Promise<AIRecipeExtraction> {
   // Step 1: OCR - read all text from image
   const ocrText = await ocrImage(imageBase64, mediaType)

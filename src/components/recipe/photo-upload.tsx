@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Camera, Loader2 } from 'lucide-react'
 import { fileToBase64 } from '@/lib/utils/file-utils'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
+import { VALID_IMAGE_TYPES, type ValidImageType } from '@/lib/constants/image'
 
 interface PhotoUploadProps {
   onExtracted: (data: AIRecipeExtraction, imageFile: File) => void
@@ -36,9 +37,8 @@ export function PhotoUpload({ onExtracted, onError }: PhotoUploadProps) {
       const base64 = await fileToBase64(compressed)
 
       // Determine media type
-      const mediaType = compressed.type as 'image/jpeg' | 'image/png' | 'image/webp'
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-      if (!validTypes.includes(mediaType)) {
+      const mediaType = compressed.type as ValidImageType
+      if (!VALID_IMAGE_TYPES.includes(mediaType)) {
         throw new Error('סוג קובץ לא נתמך. יש להשתמש ב-JPEG, PNG או WebP')
       }
 

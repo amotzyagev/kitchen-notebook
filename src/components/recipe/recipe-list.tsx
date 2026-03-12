@@ -11,6 +11,7 @@ import { RecipeCard } from './recipe-card'
 import { ShareDialog } from './share-dialog'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
+import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 type Recipe = Database['public']['Tables']['recipes']['Row']
 
@@ -92,7 +93,7 @@ export function RecipeList({ initialRecipes, currentUserId, ownerMap = {} }: Rec
         const results = await Promise.all(
           recipesWithCovers.map(async (recipe) => {
             const { data } = await supabase.storage
-              .from('recipe-images')
+              .from(RECIPE_IMAGES_BUCKET)
               .createSignedUrl(recipe.cover_image_path!, 3600)
             return { id: recipe.id, url: data?.signedUrl }
           })

@@ -4,6 +4,7 @@ import { parseRecipeImage } from './parse-recipe-image'
 import { isHebrew } from './translate'
 import { translateRecipe } from './translate'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
+import type { ValidImageType } from '@/lib/constants/image'
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 const TEXT_EXTENSIONS = ['.txt', '.md']
@@ -13,7 +14,7 @@ function getExtension(filename: string): string {
   return dot >= 0 ? filename.slice(dot).toLowerCase() : ''
 }
 
-function getMediaType(ext: string): 'image/jpeg' | 'image/png' | 'image/webp' {
+function getMediaType(ext: string): ValidImageType {
   switch (ext) {
     case '.png': return 'image/png'
     case '.webp': return 'image/webp'

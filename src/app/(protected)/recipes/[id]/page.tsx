@@ -12,6 +12,7 @@ import { RemoveSharedRecipeButton } from '@/components/recipe/remove-shared-reci
 import { ExportButton } from '@/components/recipe/export-button'
 import { ShareButton } from '@/components/recipe/share-button'
 import { CoverImageUpload } from '@/components/recipe/cover-image-upload'
+import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('he-IL', {
@@ -59,7 +60,7 @@ export default async function RecipeDetailPage({
   let coverImageUrl: string | undefined
   if (recipe.cover_image_path) {
     const { data: coverData } = await supabase.storage
-      .from('recipe-images')
+      .from(RECIPE_IMAGES_BUCKET)
       .createSignedUrl(recipe.cover_image_path, 3600)
     coverImageUrl = coverData?.signedUrl
   }

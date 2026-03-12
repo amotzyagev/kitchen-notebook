@@ -3,10 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
 import { ERROR_RATE_LIMIT } from '@/lib/constants/error-messages'
+import { VALID_IMAGE_TYPES, RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 export const maxDuration = 30
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
 export async function POST(
@@ -63,7 +62,7 @@ export async function POST(
       )
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!(VALID_IMAGE_TYPES as readonly string[]).includes(file.type)) {
       return NextResponse.json(
         { error: 'invalid_file', message: 'יש להעלות קובץ תמונה (JPEG, PNG או WebP)' },
         { status: 400 }
@@ -80,7 +79,7 @@ export async function POST(
     // 6. Upload to storage
     const path = `${user.id}/${id}/cover.webp`
     const { error: uploadError } = await supabase.storage
-      .from('recipe-images')
+      .from(RECIPE_IMAGES_BUCKET)
       .upload(path, file, { upsert: true })
 
     if (uploadError) {
@@ -160,7 +159,7 @@ export async function DELETE(
 
     // 4. Delete from storage
     const { error: deleteError } = await supabase.storage
-      .from('recipe-images')
+      .from(RECIPE_IMAGES_BUCKET)
       .remove([recipe.cover_image_path])
 
     if (deleteError) {
