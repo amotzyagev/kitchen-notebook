@@ -33,8 +33,8 @@ export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSele
 
   const cardContent = (
     <Card
-      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer border-s-[3px] ${category.border} ${coverImageUrl ? 'relative' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
-      style={{ animationDelay: `${index * 50}ms` }}
+      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer border-s-[3px] ${coverImageUrl ? 'relative' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
+      style={{ animationDelay: `${index * 50}ms`, borderInlineStartColor: category.borderColor }}
       dir="rtl"
     >
       {coverImageUrl && (
