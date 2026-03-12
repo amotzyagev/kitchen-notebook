@@ -57,6 +57,24 @@ export default async function RecipeDetailPage({
   const { data: { user } } = await supabase.auth.getUser()
   const isOwner = user?.id === recipe.user_id
 
+  let sharedByName: string | undefined
+  if (!isOwner && user) {
+    const { data: shareData } = await supabase
+      .from('recipe_shares')
+      .select('owner_id')
+      .eq('recipe_id', recipe.id)
+      .eq('shared_with_user_id', user.id)
+      .single()
+    if (shareData?.owner_id) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('id', shareData.owner_id)
+        .single()
+      sharedByName = profile?.email
+    }
+  }
+
   let coverImageUrl: string | undefined
   if (recipe.cover_image_path) {
     const { data: coverData } = await supabase.storage
@@ -76,7 +94,11 @@ export default async function RecipeDetailPage({
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-[var(--font-display)]">{recipe.title}</h1>
           <div className="flex gap-2 items-center">
-            {!isOwner && <Badge variant="secondary">משותף</Badge>}
+            {!isOwner && (
+              <Badge variant="secondary">
+                {sharedByName ? `שותף ע״י ${sharedByName}` : 'משותף'}
+              </Badge>
+            )}
             <Badge variant="outline">{sourceLabel(recipe.source_type)}</Badge>
           </div>
         </div>

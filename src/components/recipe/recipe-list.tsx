@@ -15,15 +15,12 @@ import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 type Recipe = Database['public']['Tables']['recipes']['Row']
 
-type OwnerMap = Record<string, { name: string; email: string }>
-
 interface RecipeListProps {
   initialRecipes: Recipe[]
   currentUserId?: string
-  ownerMap?: OwnerMap
 }
 
-export function RecipeList({ initialRecipes, currentUserId, ownerMap = {} }: RecipeListProps) {
+export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
   const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -249,8 +246,6 @@ export function RecipeList({ initialRecipes, currentUserId, ownerMap = {} }: Rec
               selected={selectedIds.has(recipe.id)}
               onSelect={() => toggleSelection(recipe.id)}
               coverImageUrl={coverUrls[recipe.id]}
-              isShared={!!currentUserId && recipe.user_id !== currentUserId}
-              ownerName={currentUserId && recipe.user_id !== currentUserId ? ownerMap[recipe.user_id]?.name : undefined}
             />
           ))}
         </div>
