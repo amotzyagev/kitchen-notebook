@@ -116,6 +116,7 @@ describe('recipeSchema (full)', () => {
       ingredients: ['a'],
       instructions: ['b'],
       source_type: 'manual' as const,
+      cover_image_path: null,
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
     }
