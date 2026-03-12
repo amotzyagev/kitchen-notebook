@@ -1,3 +1,4 @@
+import { useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
 import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
@@ -6,25 +7,42 @@ type RecipeInsert = Database['public']['Tables']['recipes']['Insert']
 type RecipeRow = Database['public']['Tables']['recipes']['Row']
 
 export function useRecipes() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+  const creating = useRef(false)
 
   async function createRecipe(data: Omit<RecipeInsert, 'user_id'>): Promise<RecipeRow> {
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    console.log('[createRecipe] user:', user?.id, 'authError:', authError?.message)
-    if (!user) throw new Error('יש להתחבר כדי לשמור מתכון')
-
-    const insertData = { ...data, user_id: user.id }
-    console.log('[createRecipe] inserting with user_id:', user.id)
-    const { data: recipe, error } = await supabase
-      .from('recipes')
-      .insert(insertData)
-      .select()
-      .single()
-    if (error) {
-      console.error('[createRecipe] insert error:', JSON.stringify(error))
-      throw error
+    if (creating.current) {
+      throw new Error('שמירה כבר מתבצעת')
     }
-    return recipe
+    creating.current = true
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      console.log('[createRecipe] user:', user?.id, 'authError:', authError?.message)
+      if (!user) throw new Error('יש להתחבר כדי לשמור מתכון')
+
+      const insertData = { ...data, user_id: user.id }
+      console.log('[createRecipe] inserting with user_id:', user.id, 'source_type:', insertData.source_type)
+
+      const insertPromise = supabase
+        .from('recipes')
+        .insert(insertData)
+        .select()
+        .single()
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('שמירת המתכון נכשלה - זמן המתנה עבר. נסה שוב.')), 15000)
+      )
+
+      const { data: recipe, error } = await Promise.race([insertPromise, timeoutPromise])
+
+      console.log('[createRecipe] result:', recipe?.id, 'error:', error ? JSON.stringify(error) : 'none')
+      if (error) {
+        throw error
+      }
+      return recipe
+    } finally {
+      creating.current = false
+    }
   }
 
   async function uploadRecipeImage(

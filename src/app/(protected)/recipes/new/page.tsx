@@ -37,7 +37,8 @@ export default function NewRecipePage() {
     setShowForm(true)
   }, [])
 
-  const handleUrlExtracted = useCallback((data: AIRecipeExtraction) => {
+  const handleUrlExtracted = useCallback((data: AIRecipeExtraction, url: string) => {
+    setSourceUrl(url)
     setExtractedData(data)
     setShowForm(true)
   }, [])
@@ -180,14 +181,7 @@ export default function NewRecipePage() {
         <TabsContent value="link">
           {!showForm || !extractedData ? (
             <UrlInput
-              onExtracted={(data) => {
-                // Capture the URL from the input before it gets cleared
-                const urlInput = document.querySelector<HTMLInputElement>('input[type="url"]')
-                if (urlInput) {
-                  setSourceUrl(urlInput.value)
-                }
-                handleUrlExtracted(data)
-              }}
+              onExtracted={handleUrlExtracted}
             />
           ) : (
             <div className="space-y-4">

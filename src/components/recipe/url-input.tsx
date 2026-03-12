@@ -7,7 +7,7 @@ import { Loader2, Link as LinkIcon } from 'lucide-react'
 import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 interface UrlInputProps {
-  onExtracted: (data: AIRecipeExtraction) => void
+  onExtracted: (data: AIRecipeExtraction, sourceUrl: string) => void
   onError?: (message: string) => void
 }
 
@@ -38,7 +38,7 @@ export function UrlInput({ onExtracted, onError }: UrlInputProps) {
       }
 
       const data: AIRecipeExtraction = await response.json()
-      onExtracted(data)
+      onExtracted(data, trimmedUrl)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'שגיאה בחילוץ המתכון'
       setError(message)
