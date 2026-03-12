@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient, resolveUserDisplayInfo } from '@/lib/supabase/admin'
+import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
 
 const shareSchema = z.object({
@@ -10,15 +10,9 @@ const shareSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { supabase, user } = auth
 
     const { success: withinLimit } = rateLimit(user.id, 20)
     if (!withinLimit) {
@@ -133,15 +127,9 @@ export async function POST(request: Request) {
 // GET: List outgoing shares (owner view) — used by US6
 export async function GET() {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { supabase, user } = auth
 
     const { data: shares, error } = await supabase
       .from('notebook_shares')

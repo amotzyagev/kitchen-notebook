@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/api-utils'
 
 export async function POST(
   _request: Request,
@@ -10,12 +10,8 @@ export async function POST(
     const { id } = await params
 
     // Verify admin
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user || user.email?.toLowerCase() !== process.env.ADMIN_EMAIL?.toLowerCase()) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-    }
+    const auth = await requireAdmin()
+    if (auth instanceof NextResponse) return auth
 
     const adminSupabase = createAdminClient()
     const { error } = await adminSupabase

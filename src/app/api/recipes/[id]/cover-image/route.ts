@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 30
@@ -16,15 +16,9 @@ export async function POST(
     const { id } = await params
 
     // 1. Verify auth
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר כדי להשתמש בתכונה זו' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { supabase, user } = auth
 
     // 2. Rate limit check
     const { success: withinLimit } = rateLimit(user.id, 10)
@@ -130,15 +124,9 @@ export async function DELETE(
     const { id } = await params
 
     // 1. Verify auth
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר כדי להשתמש בתכונה זו' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { supabase, user } = auth
 
     // 2. Fetch recipe and verify ownership
     const { data: recipe, error: recipeError } = await supabase

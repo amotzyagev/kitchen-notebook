@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/api-utils'
 
 export async function GET(
   _request: Request,
@@ -7,15 +7,9 @@ export async function GET(
 ) {
   try {
     const { id: recipeId } = await params
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { supabase, user } = auth
 
     // Verify recipe ownership
     const { data: recipe } = await supabase
@@ -74,15 +68,9 @@ export async function DELETE(
 ) {
   try {
     const { id: recipeId } = await params
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { supabase, user } = auth
 
     const { sharedWithUserId } = await request.json() as { sharedWithUserId: string }
 

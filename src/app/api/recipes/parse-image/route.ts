@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { parseImageRequestSchema } from '@/lib/validators/api'
 import { parseRecipeImage } from '@/lib/ai/parse-recipe-image'
+import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 120
@@ -9,15 +9,9 @@ export const maxDuration = 120
 export async function POST(request: Request) {
   try {
     // 1. Verify auth
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'unauthorized', message: 'יש להתחבר כדי להשתמש בתכונה זו' },
-        { status: 401 }
-      )
-    }
+    const auth = await requireAuth()
+    if (auth instanceof NextResponse) return auth
+    const { user } = auth
 
     // Rate limit check
     const { success: withinLimit } = rateLimit(user.id, 10)
