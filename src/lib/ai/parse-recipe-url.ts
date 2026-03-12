@@ -1,6 +1,6 @@
 import dns from 'node:dns'
 import * as cheerio from 'cheerio'
-import { anthropic } from './client'
+import { anthropic, TAGS_DESCRIPTION } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 interface SchemaOrgRecipe {
@@ -31,7 +31,7 @@ const SAVE_RECIPE_TOOL = {
       tags: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Category tags for the recipe in Hebrew (e.g., קינוח, אפייה, מאפים, סלט, מרק, בשרי, צמחוני, טבעוני, ארוחת בוקר)',
+        description: TAGS_DESCRIPTION,
       },
       original_text: { type: 'string', description: 'The original extracted text' },
       confidence: {
@@ -224,7 +224,7 @@ If the recipe has multiple stages or components (e.g., sauce, dough, filling, sa
     messages: [
       {
         role: 'user',
-        content: `Extract the recipe from this text. Assign relevant category tags in Hebrew (e.g., קינוח, אפייה, סלט, מרק, בשרי, צמחוני). Use the save_recipe tool to return the structured data.\n\n${truncatedText}`,
+        content: `Extract the recipe from this text. ${TAGS_DESCRIPTION} Use the save_recipe tool to return the structured data.\n\n${truncatedText}`,
       },
     ],
   })

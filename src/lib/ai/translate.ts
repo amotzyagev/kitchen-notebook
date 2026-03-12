@@ -1,4 +1,4 @@
-import { anthropic } from './client'
+import { anthropic, TAGS_DESCRIPTION } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 const SAVE_TRANSLATED_RECIPE_TOOL = {
@@ -22,7 +22,7 @@ const SAVE_TRANSLATED_RECIPE_TOOL = {
       tags: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Category tags for the recipe in Hebrew (e.g., קינוח, אפייה, מאפים, סלט, מרק, בשרי, צמחוני, טבעוני, ארוחת בוקר)',
+        description: TAGS_DESCRIPTION,
       },
     },
     required: ['title', 'ingredients', 'instructions', 'notes', 'tags'],
