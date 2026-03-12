@@ -1,51 +1,14 @@
 import dns from 'node:dns'
 import * as cheerio from 'cheerio'
-import { anthropic, TAGS_DESCRIPTION } from './client'
+import { anthropic, TAGS_DESCRIPTION, MODEL_HAIKU, AI_MAX_TOKENS } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
+import { SAVE_RECIPE_TOOL_WITH_TEXT as SAVE_RECIPE_TOOL } from './tools'
 
 interface SchemaOrgRecipe {
   name?: string
   recipeIngredient?: string[]
   recipeInstructions?: (string | { text?: string; '@type'?: string })[]
   description?: string
-}
-
-const SAVE_RECIPE_TOOL = {
-  name: 'save_recipe' as const,
-  description: 'Save the extracted recipe data',
-  input_schema: {
-    type: 'object' as const,
-    properties: {
-      title: { type: 'string', description: 'Recipe title' },
-      ingredients: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'List of ingredients',
-      },
-      instructions: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Ordered list of preparation steps',
-      },
-      notes: { type: 'string', description: 'Additional notes or tips' },
-      tags: {
-        type: 'array',
-        items: { type: 'string' },
-        description: TAGS_DESCRIPTION,
-      },
-      original_text: { type: 'string', description: 'The original extracted text' },
-      confidence: {
-        type: 'string',
-        enum: ['high', 'medium', 'low'],
-        description: 'Confidence level in the extraction quality',
-      },
-      is_recipe: {
-        type: 'boolean',
-        description: 'Whether the content contains a recipe',
-      },
-    },
-    required: ['title', 'ingredients', 'instructions', 'notes', 'tags', 'original_text', 'confidence', 'is_recipe'],
-  },
 }
 
 function isPrivateIP(ip: string): boolean {
@@ -214,8 +177,8 @@ export async function extractWithAI(text: string): Promise<AIRecipeExtraction> {
   console.log('[ai] Sending text to AI, length:', truncatedText.length)
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 4096,
+    model: MODEL_HAIKU,
+    max_tokens: AI_MAX_TOKENS,
     system: `You are a recipe extraction assistant. Extract structured recipe data from the provided text. The text may contain blog content, stories, and other non-recipe text — focus on finding and extracting ONLY the recipe parts: title, ingredients list, and preparation instructions. Look for sections labeled with words like "חומרים" (ingredients), "הכנה" (preparation), or similar markers.
 
 If the recipe has multiple stages or components (e.g., sauce, dough, filling, salad, topping), group the ingredients by stage. Insert a header string ending with ":" before each group — for example: "לרוטב:", "לבצק:", "לסלט:". If the recipe is simple with one stage, just list ingredients normally without headers.`,

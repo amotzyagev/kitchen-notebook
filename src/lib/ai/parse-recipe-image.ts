@@ -1,43 +1,7 @@
-import { anthropic, TAGS_DESCRIPTION } from './client'
+import { anthropic, MODEL_SONNET_DATED, AI_MAX_TOKENS } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 import { translateRecipe, isHebrew } from './translate'
-
-const SAVE_RECIPE_TOOL = {
-  name: 'save_recipe' as const,
-  description: 'Save the extracted recipe data',
-  input_schema: {
-    type: 'object' as const,
-    properties: {
-      title: { type: 'string', description: 'Recipe title' },
-      ingredients: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'List of ingredients',
-      },
-      instructions: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Ordered list of preparation steps',
-      },
-      notes: { type: 'string', description: 'Additional notes, tips, or serving suggestions' },
-      tags: {
-        type: 'array',
-        items: { type: 'string' },
-        description: TAGS_DESCRIPTION,
-      },
-      confidence: {
-        type: 'string',
-        enum: ['high', 'medium', 'low'],
-        description: 'Confidence level in the extraction quality',
-      },
-      is_recipe: {
-        type: 'boolean',
-        description: 'Whether the image contains a recipe',
-      },
-    },
-    required: ['title', 'ingredients', 'instructions', 'notes', 'tags', 'confidence', 'is_recipe'],
-  },
-}
+import { SAVE_RECIPE_TOOL } from './tools'
 
 async function ocrWithGoogleVision(imageBase64: string): Promise<string | null> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
@@ -91,8 +55,8 @@ async function ocrWithClaude(
 ): Promise<string> {
   console.log('[parse-image] Step 1: OCR with Claude Vision (fallback)')
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
+    model: MODEL_SONNET_DATED,
+    max_tokens: AI_MAX_TOKENS,
     system: `You are an OCR assistant. Your ONLY job is to read and transcribe ALL text visible in the image, exactly as written.
 - Transcribe every single line of text you see - do not skip anything
 - Preserve the original language (do not translate)
@@ -146,8 +110,8 @@ async function ocrImage(
 async function extractRecipeFromText(ocrText: string): Promise<AIRecipeExtraction> {
   console.log('[parse-image] Step 2: Extracting structured recipe from OCR text')
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
+    model: MODEL_SONNET_DATED,
+    max_tokens: AI_MAX_TOKENS,
     system: `You are a recipe extraction assistant. Given raw OCR text from an image, extract the structured recipe data.
 1. Determine if the text contains a recipe (ingredient lists, cooking instructions, or similar food preparation content)
 2. If it does, extract ALL recipe details completely — do not skip or summarize ingredients or steps

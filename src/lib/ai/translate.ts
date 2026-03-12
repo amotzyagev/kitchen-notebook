@@ -1,4 +1,4 @@
-import { anthropic, TAGS_DESCRIPTION } from './client'
+import { anthropic, TAGS_DESCRIPTION, MODEL_SONNET, AI_MAX_TOKENS } from './client'
 import { aiRecipeExtractionSchema, type AIRecipeExtraction } from '@/lib/validators/ai-response'
 
 const SAVE_TRANSLATED_RECIPE_TOOL = {
@@ -51,8 +51,8 @@ async function refineTranslation(translated: AIRecipeExtraction): Promise<AIReci
   console.log('[translate] Refining Hebrew translation...')
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      model: MODEL_SONNET,
+      max_tokens: AI_MAX_TOKENS,
       system: `You are a Hebrew language editor specializing in cooking content.
 Review the translated recipe and improve the Hebrew phrasing.
 Focus on making instructions read naturally, as if written by a native Hebrew speaker.
@@ -112,8 +112,8 @@ export async function translateRecipe(extraction: AIRecipeExtraction): Promise<A
 
   console.log('[translate] Translating to Hebrew...')
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
+    model: MODEL_SONNET,
+    max_tokens: AI_MAX_TOKENS,
     system: `You are a translation assistant specializing in recipe translation to Hebrew.
 Translate all recipe fields (title, ingredients, instructions, notes, tags) to Hebrew.
 Do NOT include original_text, confidence, or is_recipe in your response - only translate the recipe content fields.
