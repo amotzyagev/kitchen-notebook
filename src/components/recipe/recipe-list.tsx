@@ -167,59 +167,64 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
 
   return (
     <div className="space-y-4" dir="rtl">
-      {/* Search + Actions bar */}
-      <div className="flex gap-2 items-center">
-        <Input
-          placeholder="חיפוש מתכונים..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
-        />
-        <Button
-          variant={selectionMode ? 'default' : 'outline'}
-          size="icon"
-          onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
-          title={selectionMode ? 'ביטול בחירה' : 'בחירת מתכונים'}
-          aria-label={selectionMode ? 'ביטול בחירה' : 'בחירת מתכונים'}
-        >
-          <CheckSquare className="size-4" />
-        </Button>
-      </div>
+      {/* Search + Actions bar - sticky */}
+      <div className="sticky top-14 z-30 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-sm">
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="חיפוש מתכונים..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+          <Button
+            variant={selectionMode ? 'default' : 'outline'}
+            size="icon"
+            onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
+            title={selectionMode ? 'ביטול בחירה' : 'בחירת מתכונים'}
+            aria-label={selectionMode ? 'ביטול בחירה' : 'בחירת מתכונים'}
+          >
+            <CheckSquare className="size-4" />
+          </Button>
+        </div>
 
-      {/* Tag filters + shared filter */}
-      <div className={cn('flex flex-wrap gap-2', !tagsExpanded && 'max-h-[3rem] overflow-hidden')}>
-        {allTags.map((tag) => (
-          <Badge
-            key={tag}
-            variant={selectedTag === tag ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => handleTagClick(tag)}
+        {/* Tag filters - horizontal scroll on mobile, wrap on desktop */}
+        <div className={cn(
+          'mt-2 flex gap-2 scrollbar-hide',
+          tagsExpanded ? 'flex-wrap' : 'overflow-x-auto flex-nowrap md:flex-wrap md:max-h-[2.5rem] md:overflow-hidden'
+        )}>
+          {allTags.map((tag) => (
+            <Badge
+              key={tag}
+              variant={selectedTag === tag ? 'default' : 'outline'}
+              className="cursor-pointer shrink-0"
+              onClick={() => handleTagClick(tag)}
+            >
+              {tag}
+            </Badge>
+          ))}
+          {currentUserId && (
+            <Badge
+              variant={showSharedOnly ? 'default' : 'outline'}
+              className="cursor-pointer shrink-0"
+              onClick={() => setShowSharedOnly((prev) => !prev)}
+            >
+              שותפו איתי
+            </Badge>
+          )}
+        </div>
+        {allTags.length > 6 && (
+          <button
+            onClick={() => setTagsExpanded(!tagsExpanded)}
+            className="hidden md:flex text-xs text-muted-foreground hover:text-foreground items-center gap-1 transition-colors mt-1"
           >
-            {tag}
-          </Badge>
-        ))}
-        {currentUserId && (
-          <Badge
-            variant={showSharedOnly ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setShowSharedOnly((prev) => !prev)}
-          >
-            שותפו איתי
-          </Badge>
+            {tagsExpanded ? (
+              <><ChevronUp className="size-3" /> פחות</>
+            ) : (
+              <><ChevronDown className="size-3" /> עוד תגיות...</>
+            )}
+          </button>
         )}
       </div>
-      {allTags.length > 6 && (
-        <button
-          onClick={() => setTagsExpanded(!tagsExpanded)}
-          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-        >
-          {tagsExpanded ? (
-            <><ChevronUp className="size-3" /> פחות</>
-          ) : (
-            <><ChevronDown className="size-3" /> עוד תגיות...</>
-          )}
-        </button>
-      )}
 
       {/* Results */}
       {isSearching ? (

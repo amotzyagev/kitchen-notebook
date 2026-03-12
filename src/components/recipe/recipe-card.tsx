@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { getRecipeCategory } from '@/lib/utils/recipe-category'
 import type { Database } from '@/types/database'
 
 type Recipe = Database['public']['Tables']['recipes']['Row']
@@ -28,9 +29,11 @@ function formatDate(dateStr: string): string {
 }
 
 export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSelect, index = 0 }: RecipeCardProps) {
+  const category = getRecipeCategory(recipe.tags)
+
   const cardContent = (
     <Card
-      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${coverImageUrl ? 'relative' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
+      className={`card-animate h-full overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer border-s-[3px] ${category.border} ${coverImageUrl ? 'relative' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
       style={{ animationDelay: `${index * 50}ms` }}
       dir="rtl"
     >
@@ -50,14 +53,14 @@ export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSele
               onClick={(e) => e.stopPropagation()}
             />
           )}
-          <CardTitle className="text-lg line-clamp-1 flex-1">
+          <CardTitle className="text-lg font-bold line-clamp-2 flex-1">
             {recipe.title}
           </CardTitle>
         </div>
       </CardHeader>
       {recipe.tags.length > 0 && (
         <CardContent className={coverImageUrl ? 'relative z-10' : ''}>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 max-h-[3.5rem] overflow-hidden">
             {recipe.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">
                 {tag}
@@ -66,7 +69,7 @@ export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSele
           </div>
         </CardContent>
       )}
-      <CardFooter className={coverImageUrl ? 'relative z-10' : ''}>
+      <CardFooter className={`mt-auto ${coverImageUrl ? 'relative z-10' : ''}`}>
         <span className="text-xs text-muted-foreground">
           {formatDate(recipe.updated_at)}
         </span>

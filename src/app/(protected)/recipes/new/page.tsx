@@ -138,7 +138,10 @@ export default function NewRecipePage() {
 
         <TabsContent value="text">
           {!showForm || !extractedData ? (
-            <TextInput onExtracted={handleTextExtracted} />
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">הדביקו טקסט של מתכון והבינה המלאכותית תחלץ אותו לפורמט מסודר.</p>
+              <TextInput onExtracted={handleTextExtracted} />
+            </div>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -158,9 +161,12 @@ export default function NewRecipePage() {
 
         <TabsContent value="photo">
           {!showForm || !extractedData ? (
-            <PhotoUpload
-              onExtracted={handlePhotoExtracted}
-            />
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">צלמו או העלו תמונה של מתכון מספר בישול, מגזין או כל מקור אחר.</p>
+              <PhotoUpload
+                onExtracted={handlePhotoExtracted}
+              />
+            </div>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -180,9 +186,12 @@ export default function NewRecipePage() {
 
         <TabsContent value="link">
           {!showForm || !extractedData ? (
-            <UrlInput
-              onExtracted={handleUrlExtracted}
-            />
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">הדביקו קישור לאתר מתכונים והבינה המלאכותית תחלץ את המתכון אוטומטית.</p>
+              <UrlInput
+                onExtracted={handleUrlExtracted}
+              />
+            </div>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">

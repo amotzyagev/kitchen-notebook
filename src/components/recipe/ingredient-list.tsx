@@ -39,12 +39,15 @@ export function IngredientList({ ingredients, showCheckboxes = false }: Ingredie
           )
         }
         return (
-          <li key={index} className="flex items-center gap-2">
+          <li key={index} className="flex items-center gap-3">
             {showCheckboxes && (
-              <Checkbox
-                checked={checked.has(index)}
-                onCheckedChange={() => toggleItem(index)}
-              />
+              <label className="flex items-center cursor-pointer min-h-[44px] min-w-[44px] justify-center -m-2 p-2">
+                <Checkbox
+                  checked={checked.has(index)}
+                  onCheckedChange={() => toggleItem(index)}
+                  className="size-5"
+                />
+              </label>
             )}
             <span className={checked.has(index) ? 'line-through text-muted-foreground' : ''}>
               {ingredient}

@@ -73,16 +73,16 @@ export default async function RecipeDetailPage({
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6" dir="rtl">
+    <div className="max-w-2xl mx-auto p-4 space-y-6 pb-24 md:pb-6" dir="rtl">
       <Link href="/recipes" className="text-sm text-muted-foreground hover:text-foreground">
-        → חזרה למתכונים
+        &rarr; חזרה למתכונים
       </Link>
 
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-[var(--font-display)]">{recipe.title}</h1>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center shrink-0">
             {!isOwner && (
               <Badge variant="secondary">
                 {sharedByName ? `שותף ע״י ${sharedByName}` : 'משותף'}
@@ -141,7 +141,7 @@ export default async function RecipeDetailPage({
         <p>עודכן: {formatDate(recipe.updated_at)}</p>
       </div>
 
-      {/* Actions */}
+      {/* Primary Actions - sticky on mobile */}
       <div className="flex gap-3 flex-wrap">
         {isOwner && (
           <Link href={`/recipes/${recipe.id}/edit`}>
@@ -164,7 +164,8 @@ export default async function RecipeDetailPage({
       {isOwner && (
         <CoverImageUpload recipeId={recipe.id} hasCoverImage={!!recipe.cover_image_path} />
       )}
-      <div className="flex gap-3 pt-2 border-t border-border">
+      {/* Danger zone - de-emphasized */}
+      <div className="pt-2 border-t border-border">
         {isOwner && <DeleteRecipeButton recipeId={recipe.id} />}
         {!isOwner && <RemoveSharedRecipeButton recipeId={recipe.id} />}
       </div>
