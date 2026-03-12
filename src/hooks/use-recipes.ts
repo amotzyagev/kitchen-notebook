@@ -50,10 +50,11 @@ export function useRecipes() {
     recipeId: string,
     file: File
   ): Promise<string> {
-    const path = `${userId}/${recipeId}/${file.name}`
+    const ext = file.name.split('.').pop() || 'jpg'
+    const path = `${userId}/${recipeId}/image.${ext}`
     const { error } = await supabase.storage
       .from(RECIPE_IMAGES_BUCKET)
-      .upload(path, file)
+      .upload(path, file, { upsert: true })
     if (error) throw error
     return path
   }
