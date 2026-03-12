@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { resolveUserDisplayInfo } from '@/lib/supabase/admin'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -59,12 +60,8 @@ export default async function RecipeDetailPage({
 
   let sharedByName: string | undefined
   if (!isOwner) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('email')
-      .eq('id', recipe.user_id)
-      .single()
-    sharedByName = profile?.email
+    const ownerInfo = await resolveUserDisplayInfo(recipe.user_id)
+    sharedByName = ownerInfo.name || ownerInfo.email || undefined
   }
 
   let coverImageUrl: string | undefined
