@@ -49,16 +49,13 @@ export const SAVE_RECIPE_TOOL = {
   },
 }
 
-/** Tool definition with original_text included (used by URL/text extraction). */
+/** Tool definition for URL/text extraction (original_text supplied by caller, not the AI). */
 export const SAVE_RECIPE_TOOL_WITH_TEXT = {
   name: 'save_recipe' as const,
   description: 'Save the extracted recipe data',
   input_schema: {
     type: 'object' as const,
-    properties: {
-      ...BASE_PROPERTIES,
-      original_text: { type: 'string' as const, description: 'The original extracted text' },
-    },
-    required: [...BASE_REQUIRED, 'original_text'],
+    properties: BASE_PROPERTIES,
+    required: [...BASE_REQUIRED],
   },
 }

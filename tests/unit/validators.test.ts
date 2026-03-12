@@ -178,6 +178,22 @@ describe('aiRecipeExtractionSchema', () => {
     expect(aiRecipeExtractionSchema.safeParse(invalid).success).toBe(false)
   })
 
+  it('accepts missing original_text and defaults to empty string', () => {
+    const valid = {
+      title: 'Test',
+      ingredients: ['a'],
+      instructions: ['b'],
+      notes: '',
+      confidence: 'high' as const,
+      is_recipe: true,
+    }
+    const result = aiRecipeExtractionSchema.safeParse(valid)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.original_text).toBe('')
+    }
+  })
+
   it('rejects missing required fields', () => {
     expect(aiRecipeExtractionSchema.safeParse({ title: 'Test' }).success).toBe(false)
     expect(aiRecipeExtractionSchema.safeParse({}).success).toBe(false)

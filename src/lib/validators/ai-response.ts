@@ -13,7 +13,7 @@ export const aiRecipeExtractionSchema = z.object({
   instructions: stringOrArray,
   notes: z.string(),
   tags: z.array(z.string()).default([]),
-  original_text: z.string(),
+  original_text: z.string().optional().default(''),
   confidence: z.enum(['high', 'medium', 'low']),
   is_recipe: z.boolean(),
 });

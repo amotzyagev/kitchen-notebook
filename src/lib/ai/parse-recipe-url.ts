@@ -209,6 +209,11 @@ If the recipe has multiple stages or components (e.g., sauce, dough, filling, sa
     throw parsed.error
   }
 
+  // If the AI didn't return original_text (e.g. hit max_tokens), use the source text
+  if (!parsed.data.original_text) {
+    parsed.data.original_text = truncatedText
+  }
+
   return parsed.data
 }
 
