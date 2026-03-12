@@ -58,21 +58,13 @@ export default async function RecipeDetailPage({
   const isOwner = user?.id === recipe.user_id
 
   let sharedByName: string | undefined
-  if (!isOwner && user) {
-    const { data: shareData } = await supabase
-      .from('recipe_shares')
-      .select('owner_id')
-      .eq('recipe_id', recipe.id)
-      .eq('shared_with_user_id', user.id)
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('email')
+      .eq('id', recipe.user_id)
       .single()
-    if (shareData?.owner_id) {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('email')
-        .eq('id', shareData.owner_id)
-        .single()
-      sharedByName = profile?.email
-    }
+    sharedByName = profile?.email
   }
 
   let coverImageUrl: string | undefined
