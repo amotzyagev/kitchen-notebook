@@ -143,7 +143,7 @@ export default async function RecipeDetailPage({
         )}
         {recipe.source_type === 'link' && recipe.source_url && (
           <a href={recipe.source_url} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">מקור מקורי</Button>
+            <Button variant="outline" size="sm">מתכון מקורי</Button>
           </a>
         )}
         <ShareButton recipeIds={[recipe.id]} />

@@ -61,7 +61,7 @@ function OriginalSource({ recipe, imageUrl }: SourceComparisonProps) {
           {recipe.source_url && (
             <a href={recipe.source_url} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">
-                פתח מקור מקורי
+                פתח מתכון מקורי
               </Button>
             </a>
           )}
