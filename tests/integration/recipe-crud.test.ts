@@ -24,9 +24,11 @@ const mockUpload = vi.fn()
 const mockStorage = {
   from: vi.fn(() => ({ upload: mockUpload, remove: mockRemove })),
 }
+const mockGetUser = vi.fn()
 const mockSupabase = {
   from: mockFrom,
   storage: mockStorage,
+  auth: { getUser: mockGetUser },
 }
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -39,6 +41,10 @@ import { useRecipes } from '@/hooks/use-recipes'
 describe('Recipe CRUD operations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'user-1' } },
+      error: null,
+    })
   })
 
   describe('createRecipe', () => {
@@ -49,14 +55,14 @@ describe('Recipe CRUD operations', () => {
         instructions: ['mix', 'bake'],
         source_type: 'manual' as const,
       }
-      const returnedRecipe = { id: '123', ...newRecipe }
+      const returnedRecipe = { id: '123', ...newRecipe, user_id: 'user-1' }
       mockSingle.mockResolvedValue({ data: returnedRecipe, error: null })
 
       const { createRecipe } = useRecipes()
       const result = await createRecipe(newRecipe)
 
       expect(mockFrom).toHaveBeenCalledWith('recipes')
-      expect(mockInsert).toHaveBeenCalledWith(newRecipe)
+      expect(mockInsert).toHaveBeenCalledWith({ ...newRecipe, user_id: 'user-1' })
       expect(result).toEqual(returnedRecipe)
     })
 
@@ -133,7 +139,7 @@ describe('Recipe CRUD operations', () => {
       const { uploadRecipeImage } = useRecipes()
       const path = await uploadRecipeImage('user-1', 'recipe-1', file)
 
-      expect(path).toBe('user-1/recipe-1/photo.jpg')
+      expect(path).toBe('user-1/recipe-1/image.jpg')
       expect(mockStorage.from).toHaveBeenCalledWith('recipe-images')
     })
 

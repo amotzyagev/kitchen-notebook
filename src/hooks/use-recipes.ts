@@ -1,4 +1,3 @@
-import { useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
 import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
@@ -6,15 +5,16 @@ import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 type RecipeInsert = Database['public']['Tables']['recipes']['Insert']
 type RecipeRow = Database['public']['Tables']['recipes']['Row']
 
+let creating = false
+
 export function useRecipes() {
-  const supabase = useMemo(() => createClient(), [])
-  const creating = useRef(false)
+  const supabase = createClient()
 
   async function createRecipe(data: Omit<RecipeInsert, 'user_id'>): Promise<RecipeRow> {
-    if (creating.current) {
+    if (creating) {
       throw new Error('שמירה כבר מתבצעת')
     }
-    creating.current = true
+    creating = true
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       console.log('[createRecipe] user:', user?.id, 'authError:', authError?.message)
@@ -41,7 +41,7 @@ export function useRecipes() {
       }
       return recipe
     } finally {
-      creating.current = false
+      creating = false
     }
   }
 

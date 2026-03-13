@@ -13,6 +13,7 @@ import { RemoveSharedRecipeButton } from '@/components/recipe/remove-shared-reci
 import { ExportButton } from '@/components/recipe/export-button'
 import { ShareButton } from '@/components/recipe/share-button'
 import { CoverImageUpload } from '@/components/recipe/cover-image-upload'
+import { SelfNotesSection } from '@/components/recipe/self-notes-section'
 import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 function formatDate(dateStr: string): string {
@@ -132,6 +133,9 @@ export default async function RecipeDetailPage({
           </section>
         </>
       )}
+
+      {/* Self Notes */}
+      <SelfNotesSection recipeId={recipe.id} isOwner={isOwner} recipe={recipe} />
 
       <Separator />
 
