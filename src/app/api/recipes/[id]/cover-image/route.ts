@@ -44,10 +44,16 @@ export async function POST(
     }
 
     if (recipe.user_id !== user.id) {
-      return NextResponse.json(
-        { error: 'forbidden', message: 'אין הרשאה לעדכן מתכון זה' },
-        { status: 403 }
-      )
+      const { data: familyCheck } = await supabase.rpc('are_family', {
+        user_a: recipe.user_id,
+        user_b: user.id,
+      })
+      if (!familyCheck) {
+        return NextResponse.json(
+          { error: 'forbidden', message: 'אין הרשאה לעדכן מתכון זה' },
+          { status: 403 }
+        )
+      }
     }
 
     // 4. Parse FormData
@@ -76,8 +82,8 @@ export async function POST(
       )
     }
 
-    // 6. Upload to storage
-    const path = `${user.id}/${id}/cover.webp`
+    // 6. Upload to storage — always use recipe owner's folder so path is stable
+    const path = `${recipe.user_id}/${id}/cover.webp`
     const { error: uploadError } = await supabase.storage
       .from(RECIPE_IMAGES_BUCKET)
       .upload(path, file, { upsert: true })
@@ -143,10 +149,16 @@ export async function DELETE(
     }
 
     if (recipe.user_id !== user.id) {
-      return NextResponse.json(
-        { error: 'forbidden', message: 'אין הרשאה לעדכן מתכון זה' },
-        { status: 403 }
-      )
+      const { data: familyCheck } = await supabase.rpc('are_family', {
+        user_a: recipe.user_id,
+        user_b: user.id,
+      })
+      if (!familyCheck) {
+        return NextResponse.json(
+          { error: 'forbidden', message: 'אין הרשאה לעדכן מתכון זה' },
+          { status: 403 }
+        )
+      }
     }
 
     // 3. Check if cover image exists

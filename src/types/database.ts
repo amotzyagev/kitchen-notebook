@@ -224,12 +224,60 @@ export interface Database {
           }
         ]
       }
+      family_relationships: {
+        Row: {
+          id: string
+          requester_id: string
+          addressee_id: string
+          status: 'pending' | 'accepted' | 'declined'
+          declined_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          requester_id?: string
+          addressee_id: string
+          status?: 'pending' | 'accepted' | 'declined'
+          declined_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          requester_id?: string
+          addressee_id?: string
+          status?: 'pending' | 'accepted' | 'declined'
+          declined_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'family_relationships_requester_id_fkey'
+            columns: ['requester_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'family_relationships_addressee_id_fkey'
+            columns: ['addressee_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      are_family: {
+        Args: { user_a: string; user_b: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

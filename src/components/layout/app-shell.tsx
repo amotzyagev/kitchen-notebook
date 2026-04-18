@@ -14,13 +14,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, Plus, Share2, Bell, BookOpen } from 'lucide-react'
+import { ChevronDown, Plus, Share2, Bell, BookOpen, Heart } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { ShareNotebookDialog } from '@/components/notebook/share-notebook-dialog'
 import { PendingInvitations } from '@/components/notebook/pending-invitations'
 import { SharedNotebooksList } from '@/components/notebook/shared-notebooks-list'
+import { FamilyDialog } from '@/components/notebook/family-dialog'
 import { useNotebookShares } from '@/hooks/use-notebook-shares'
+import { useFamilyRelationships } from '@/hooks/use-family-relationships'
 
 interface AppShellProps {
   user: User
@@ -32,7 +34,10 @@ export function AppShell({ user, children }: AppShellProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [pendingOpen, setPendingOpen] = useState(false)
   const [sharedNotebooksOpen, setSharedNotebooksOpen] = useState(false)
-  const { pendingCount, fetchPending } = useNotebookShares()
+  const [familyDialogOpen, setFamilyDialogOpen] = useState(false)
+  const { pendingCount: sharesPendingCount, fetchPending } = useNotebookShares()
+  const { pendingCount: familyPendingCount } = useFamilyRelationships()
+  const pendingCount = sharesPendingCount + familyPendingCount
 
   const displayName =
     user.user_metadata?.display_name || user.email || 'משתמש'
@@ -89,6 +94,10 @@ export function AppShell({ user, children }: AppShellProps) {
                   <BookOpen className="size-4 me-2" />
                   מחברות משותפות
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFamilyDialogOpen(true)}>
+                  <Heart className="size-4 me-2" />
+                  משפחה
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   התנתק
@@ -104,6 +113,7 @@ export function AppShell({ user, children }: AppShellProps) {
       <ShareNotebookDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
       <PendingInvitations open={pendingOpen} onOpenChange={(open) => { setPendingOpen(open); if (!open) fetchPending() }} />
       <SharedNotebooksList open={sharedNotebooksOpen} onOpenChange={setSharedNotebooksOpen} />
+      <FamilyDialog open={familyDialogOpen} onOpenChange={setFamilyDialogOpen} />
     </div>
   )
 }

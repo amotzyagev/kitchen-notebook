@@ -59,10 +59,19 @@ export default async function RecipeDetailPage({
   const { data: { user } } = await supabase.auth.getUser()
   const isOwner = user?.id === recipe.user_id
 
+  let canEdit = isOwner
   let sharedByName: string | undefined
   if (!isOwner) {
     const ownerInfo = await resolveUserDisplayInfo(recipe.user_id)
     sharedByName = ownerInfo.name || ownerInfo.email || undefined
+
+    if (user) {
+      const { data: familyCheck } = await supabase.rpc('are_family', {
+        user_a: recipe.user_id,
+        user_b: user.id,
+      })
+      canEdit = familyCheck === true
+    }
   }
 
   let coverImageUrl: string | undefined
@@ -147,7 +156,7 @@ export default async function RecipeDetailPage({
 
       {/* Primary Actions - sticky on mobile */}
       <div className="flex gap-3 flex-wrap">
-        {isOwner && (
+        {canEdit && (
           <Link href={`/recipes/${recipe.id}/edit`}>
             <Button variant="outline" size="sm">עריכה</Button>
           </Link>
@@ -165,7 +174,7 @@ export default async function RecipeDetailPage({
         <ShareButton recipeIds={[recipe.id]} />
         <ExportButton recipeIds={[recipe.id]} />
       </div>
-      {isOwner && (
+      {canEdit && (
         <CoverImageUpload recipeId={recipe.id} hasCoverImage={!!recipe.cover_image_path} />
       )}
       {/* Danger zone - de-emphasized */}
