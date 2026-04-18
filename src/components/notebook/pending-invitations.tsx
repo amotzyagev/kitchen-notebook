@@ -19,10 +19,9 @@ interface PendingInvitationsProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   unseenNotifications: FeatureNotification[]
-  markAllSeen: () => void
 }
 
-export function PendingInvitations({ open, onOpenChange, unseenNotifications, markAllSeen }: PendingInvitationsProps) {
+export function PendingInvitations({ open, onOpenChange, unseenNotifications }: PendingInvitationsProps) {
   const { pendingShares, fetchPending: fetchSharesPending, updateShare, loading: sharesLoading } = useNotebookShares()
   const { pendingRequests, fetchPending: fetchFamilyPending, respondToInvite, loading: familyLoading } = useFamilyRelationships()
 
@@ -32,9 +31,8 @@ export function PendingInvitations({ open, onOpenChange, unseenNotifications, ma
     if (open) {
       fetchSharesPending()
       fetchFamilyPending()
-      markAllSeen()
     }
-  }, [open, fetchSharesPending, fetchFamilyPending, markAllSeen])
+  }, [open, fetchSharesPending, fetchFamilyPending])
 
   async function handleShareAction(id: string, action: 'approve' | 'decline') {
     const result = await updateShare(id, action)

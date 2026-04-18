@@ -113,7 +113,7 @@ export function AppShell({ user, children }: AppShellProps) {
       <BottomNav />
 
       <ShareNotebookDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
-      <PendingInvitations open={pendingOpen} onOpenChange={(open) => { setPendingOpen(open); if (!open) fetchPending() }} unseenNotifications={unseenNotifications} markAllSeen={markAllSeen} />
+      <PendingInvitations open={pendingOpen} onOpenChange={(open) => { setPendingOpen(open); if (!open) { fetchPending(); markAllSeen() } }} unseenNotifications={unseenNotifications} />
       <SharedNotebooksList open={sharedNotebooksOpen} onOpenChange={setSharedNotebooksOpen} />
       <FamilyDialog open={familyDialogOpen} onOpenChange={setFamilyDialogOpen} />
     </div>
