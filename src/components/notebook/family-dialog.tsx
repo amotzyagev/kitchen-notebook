@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Heart, Loader2, X, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -52,15 +52,14 @@ export function FamilyDialog({ open, onOpenChange }: FamilyDialogProps) {
     loading,
   } = useFamilyRelationships()
 
-  function handleOpen(isOpen: boolean) {
-    onOpenChange(isOpen)
-    if (isOpen) {
+  useEffect(() => {
+    if (open) {
       fetchOutgoing()
       fetchAccepted()
     } else {
       setEmail('')
     }
-  }
+  }, [open, fetchOutgoing, fetchAccepted])
 
   async function handleInvite() {
     const trimmed = email.trim()
@@ -94,7 +93,7 @@ export function FamilyDialog({ open, onOpenChange }: FamilyDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
