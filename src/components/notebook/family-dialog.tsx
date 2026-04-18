@@ -56,8 +56,6 @@ export function FamilyDialog({ open, onOpenChange }: FamilyDialogProps) {
     if (open) {
       fetchOutgoing()
       fetchAccepted()
-    } else {
-      setEmail('')
     }
   }, [open, fetchOutgoing, fetchAccepted])
 
@@ -93,7 +91,7 @@ export function FamilyDialog({ open, onOpenChange }: FamilyDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => { if (!newOpen) setEmail(''); onOpenChange(newOpen) }}>
       <DialogContent dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

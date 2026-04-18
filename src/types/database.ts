@@ -68,18 +68,21 @@ export interface Database {
           email: string
           approved: boolean
           created_at: string
+          seen_notification_ids: string[]
         }
         Insert: {
           id: string
           email: string
           approved?: boolean
           created_at?: string
+          seen_notification_ids?: string[]
         }
         Update: {
           id?: string
           email?: string
           approved?: boolean
           created_at?: string
+          seen_notification_ids?: string[]
         }
         Relationships: [
           {

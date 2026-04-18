@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Check, X, Loader2 } from 'lucide-react'
+import { Check, X, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -13,13 +13,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useNotebookShares } from '@/hooks/use-notebook-shares'
 import { useFamilyRelationships } from '@/hooks/use-family-relationships'
+import type { FeatureNotification } from '@/lib/feature-notifications'
 
 interface PendingInvitationsProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  unseenNotifications: FeatureNotification[]
+  markAllSeen: () => void
 }
 
-export function PendingInvitations({ open, onOpenChange }: PendingInvitationsProps) {
+export function PendingInvitations({ open, onOpenChange, unseenNotifications, markAllSeen }: PendingInvitationsProps) {
   const { pendingShares, fetchPending: fetchSharesPending, updateShare, loading: sharesLoading } = useNotebookShares()
   const { pendingRequests, fetchPending: fetchFamilyPending, respondToInvite, loading: familyLoading } = useFamilyRelationships()
 
@@ -29,8 +32,9 @@ export function PendingInvitations({ open, onOpenChange }: PendingInvitationsPro
     if (open) {
       fetchSharesPending()
       fetchFamilyPending()
+      markAllSeen()
     }
-  }, [open, fetchSharesPending, fetchFamilyPending])
+  }, [open, fetchSharesPending, fetchFamilyPending, markAllSeen])
 
   async function handleShareAction(id: string, action: 'approve' | 'decline') {
     const result = await updateShare(id, action)
@@ -56,14 +60,31 @@ export function PendingInvitations({ open, onOpenChange }: PendingInvitationsPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl">
         <DialogHeader>
-          <DialogTitle>הזמנות ממתינות</DialogTitle>
+          <DialogTitle>התראות</DialogTitle>
         </DialogHeader>
 
-        {totalCount === 0 ? (
+        {unseenNotifications.length > 0 && (
+          <ul className="space-y-3 mb-2">
+            {unseenNotifications.map((notification) => (
+              <li key={notification.id} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/40">
+                <Sparkles className="size-4 mt-0.5 shrink-0 text-primary" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-sm font-medium">{notification.titleHe}</p>
+                    <Badge className="text-[10px] shrink-0">חדש</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{notification.bodyHe}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {totalCount === 0 && unseenNotifications.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            אין הזמנות ממתינות
+            אין התראות
           </p>
-        ) : (
+        ) : totalCount === 0 ? null : (
           <ul className="space-y-3">
             {pendingShares.map((share) => (
               <li key={share.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border">

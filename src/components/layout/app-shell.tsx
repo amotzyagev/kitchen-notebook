@@ -23,6 +23,7 @@ import { SharedNotebooksList } from '@/components/notebook/shared-notebooks-list
 import { FamilyDialog } from '@/components/notebook/family-dialog'
 import { useNotebookShares } from '@/hooks/use-notebook-shares'
 import { useFamilyRelationships } from '@/hooks/use-family-relationships'
+import { useFeatureNotifications } from '@/hooks/use-feature-notifications'
 
 interface AppShellProps {
   user: User
@@ -37,7 +38,8 @@ export function AppShell({ user, children }: AppShellProps) {
   const [familyDialogOpen, setFamilyDialogOpen] = useState(false)
   const { pendingCount: sharesPendingCount, fetchPending } = useNotebookShares()
   const { pendingCount: familyPendingCount } = useFamilyRelationships()
-  const pendingCount = sharesPendingCount + familyPendingCount
+  const { unseenNotifications, unseenCount: featureUnseenCount, markAllSeen } = useFeatureNotifications()
+  const pendingCount = sharesPendingCount + familyPendingCount + featureUnseenCount
 
   const displayName =
     user.user_metadata?.display_name || user.email || 'משתמש'
@@ -111,7 +113,7 @@ export function AppShell({ user, children }: AppShellProps) {
       <BottomNav />
 
       <ShareNotebookDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
-      <PendingInvitations open={pendingOpen} onOpenChange={(open) => { setPendingOpen(open); if (!open) fetchPending() }} />
+      <PendingInvitations open={pendingOpen} onOpenChange={(open) => { setPendingOpen(open); if (!open) fetchPending() }} unseenNotifications={unseenNotifications} markAllSeen={markAllSeen} />
       <SharedNotebooksList open={sharedNotebooksOpen} onOpenChange={setSharedNotebooksOpen} />
       <FamilyDialog open={familyDialogOpen} onOpenChange={setFamilyDialogOpen} />
     </div>
