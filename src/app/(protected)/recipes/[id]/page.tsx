@@ -6,7 +6,7 @@ import { resolveUserDisplayInfo } from '@/lib/supabase/admin'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { IngredientList } from '@/components/recipe/ingredient-list'
+import { RecipeMultiplierSection } from '@/components/recipe/recipe-multiplier-section'
 import { InstructionList } from '@/components/recipe/instruction-list'
 import { DeleteRecipeButton } from '@/components/recipe/delete-recipe-button'
 import { RemoveSharedRecipeButton } from '@/components/recipe/remove-shared-recipe-button'
@@ -119,10 +119,7 @@ export default async function RecipeDetailPage({
       <Separator />
 
       {/* Ingredients */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">מרכיבים</h2>
-        <IngredientList ingredients={recipe.ingredients} showCheckboxes />
-      </section>
+      <RecipeMultiplierSection ingredients={recipe.ingredients} />
 
       <Separator />
 
