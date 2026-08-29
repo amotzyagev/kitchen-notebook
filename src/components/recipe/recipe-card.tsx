@@ -50,7 +50,13 @@ export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSele
               checked={selected}
               className="shrink-0"
               aria-label="בחר מתכון"
+              onCheckedChange={() => onSelect?.()}
+              // The wrapper below is also clickable, so stop both click and
+              // key events here: without this a tap on the box would toggle
+              // twice (once via onCheckedChange, once via the wrapper) and
+              // appear to do nothing at all.
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             />
           )}
           <CardTitle className="text-lg font-bold line-clamp-2 flex-1">
@@ -79,7 +85,18 @@ export function RecipeCard({ recipe, coverImageUrl, selectable, selected, onSele
 
   if (selectable) {
     return (
-      <div onClick={onSelect} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.() }}>
+      <div
+        onClick={onSelect}
+        role="button"
+        aria-pressed={selected}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect?.()
+          }
+        }}
+      >
         {cardContent}
       </div>
     )

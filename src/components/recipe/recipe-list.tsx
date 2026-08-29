@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { CheckSquare, Share2, Printer, X, ChevronDown, ChevronUp, Link2, Camera, FileText, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,12 @@ import type { Database } from '@/types/database'
 import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 type Recipe = Database['public']['Tables']['recipes']['Row']
+
+// % and _ are wildcards in ilike. Without escaping them, a title
+// containing either character cannot be searched for literally.
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`)
+}
 
 interface RecipeListProps {
   initialRecipes: Recipe[]
@@ -33,6 +39,9 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
   const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
 
   const supabase = useMemo(() => createClient(), [])
+  // Monotonic id for the in-flight search, so a slow earlier response
+  // cannot overwrite the results of a later one.
+  const searchIdRef = useRef(0)
 
   // Collect all distinct tags from initial recipes, sorted by popularity
   const allTags = useMemo(() => {
@@ -44,16 +53,20 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
   }, [initialRecipes])
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const timer = setTimeout(async () => {
+      const searchId = ++searchIdRef.current
       setIsSearching(true)
       try {
         let query = supabase
           .from('recipes')
           .select('*')
           .order('title', { ascending: true })
+          .abortSignal(controller.signal)
 
         if (searchQuery.trim()) {
-          query = query.ilike('title', `%${searchQuery.trim()}%`)
+          query = query.ilike('title', `%${escapeLike(searchQuery.trim())}%`)
         }
 
         if (selectedTag) {
@@ -65,16 +78,24 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
         }
 
         const { data, error } = await query
+        // A superseded search must not touch state, whether it succeeded or
+        // was aborted — typing "chocolate cake" fires several requests and
+        // they can come back out of order.
+        if (searchId !== searchIdRef.current) return
         if (error) throw error
         setRecipes(data ?? [])
       } catch (error) {
+        if (searchId !== searchIdRef.current) return
         console.error('Search failed:', error)
       } finally {
-        setIsSearching(false)
+        if (searchId === searchIdRef.current) setIsSearching(false)
       }
     }, 300)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
   }, [searchQuery, selectedTag, showSharedOnly, currentUserId, supabase])
 
   // Generate signed URLs for recipe cover images
