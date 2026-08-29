@@ -21,11 +21,11 @@ export async function POST(
     const { supabase, user } = auth
 
     // 2. Rate limit check
-    const { success: withinLimit } = rateLimit(user.id, 10)
+    const { success: withinLimit, retryAfterSeconds } = await rateLimit('coverImage', user.id)
     if (!withinLimit) {
       return NextResponse.json(
         { error: 'rate_limit', message: ERROR_RATE_LIMIT },
-        { status: 429 }
+        { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
       )
     }
 

@@ -20,11 +20,11 @@ export async function POST(request: Request) {
     const { user } = auth
 
     // Rate limit check
-    const { success: withinLimit } = rateLimit(user.id, 10)
+    const { success: withinLimit, retryAfterSeconds } = await rateLimit('aiParse', user.id)
     if (!withinLimit) {
       return NextResponse.json(
         { error: 'rate_limit', message: ERROR_RATE_LIMIT },
-        { status: 429 }
+        { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
       )
     }
 

@@ -44,7 +44,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Also handle the actual resolved paths under (protected) group
-  const isProtectedRoute = pathname.startsWith('/recipes') || pathname.startsWith('/settings') || pathname.startsWith('/api/recipes')
+  // Every route that an unapproved account must not reach. Migration 016 is
+  // the real boundary — these checks only exist so the app returns a sensible
+  // redirect or 403 instead of an empty result set from a blocked query.
+  // /api/auth and /auth/callback are deliberately absent: the profile-repair
+  // call below targets /api/auth/on-signup and would otherwise deadlock.
+  const PROTECTED_PREFIXES = [
+    '/recipes',
+    '/settings',
+    '/api/recipes',
+    '/api/notebook-shares',
+    '/api/family-relationships',
+    '/api/feature-notifications',
+  ]
+  const isProtectedRoute = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   if (!user && isProtectedRoute) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'לא מאומת' }, { status: 401 })

@@ -281,6 +281,23 @@ export interface Database {
         Args: { user_a: string; user_b: string }
         Returns: boolean
       }
+      is_approved: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
+      consume_rate_limit: {
+        Args: {
+          p_bucket: string
+          p_user_id: string
+          p_limit: number
+          p_window_seconds?: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          reset_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
