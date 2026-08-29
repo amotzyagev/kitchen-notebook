@@ -11,15 +11,16 @@ interface SchemaOrgRecipe {
   description?: string
 }
 
-function isPrivateIP(ip: string): boolean {
+export function isPrivateIP(ip: string): boolean {
   const normalized = ip.toLowerCase()
 
-  // IPv6 loopback
+  // IPv6 loopback and unspecified
   if (normalized === '::1' || normalized === '0:0:0:0:0:0:0:1') return true
+  if (normalized === '::' || normalized === '0:0:0:0:0:0:0:0') return true
 
   // IPv6 private ranges (case-insensitive)
   if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true // ULA fc00::/7
-  if (normalized.startsWith('fe80')) return true // Link-local fe80::/10
+  if (/^fe[89ab]/.test(normalized)) return true // Link-local fe80::/10 (fe80-febf)
 
   // Parse IPv4 (handles plain IPv4, ::ffff:x.x.x.x, and ::ffff:0:x.x.x.x)
   const v4Match = normalized.match(/(?:::ffff:(?:0:)?)?(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
@@ -32,7 +33,11 @@ function isPrivateIP(ip: string): boolean {
     a === 10 ||               // 10.0.0.0/8 private
     (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12 private
     (a === 192 && b === 168) ||          // 192.168.0.0/16 private
-    (a === 169 && b === 254) ||          // 169.254.0.0/16 link-local
+    (a === 169 && b === 254) ||          // 169.254.0.0/16 link-local (cloud metadata)
+    (a === 100 && b >= 64 && b <= 127) || // 100.64.0.0/10 CGNAT
+    (a === 192 && b === 0) ||            // 192.0.0.0/24 IETF, 192.0.2.0/24 TEST-NET-1
+    (a === 198 && (b === 18 || b === 19)) || // 198.18.0.0/15 benchmarking
+    a >= 224 ||               // 224.0.0.0/4 multicast + 240.0.0.0/4 reserved
     a === 0                   // 0.0.0.0/8
   )
 }
@@ -217,37 +222,123 @@ If the recipe has multiple stages or components (e.g., sauce, dough, filling, sa
   return parsed.data
 }
 
-async function fetchSimple(url: string): Promise<string | null> {
+const MAX_REDIRECTS = 5
+const MAX_HTML_BYTES = 5 * 1024 * 1024
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
+
+const BROWSER_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9,he;q=0.8',
+  Referer: 'https://www.google.com/',
+  'Sec-Fetch-Site': 'cross-site',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Dest': 'document',
+}
+
+/**
+ * Read a response body as text, refusing to buffer more than `maxBytes`.
+ *
+ * Response.text() is unbounded, so a hostile (or merely broken) endpoint could
+ * exhaust memory by streaming indefinitely. Decoding is UTF-8, which matches
+ * what Response.text() already does - per the Fetch spec it ignores the charset
+ * in Content-Type - so this is not a behaviour change for non-UTF-8 pages.
+ */
+async function readTextCapped(response: Response, maxBytes: number): Promise<string> {
+  const declared = Number(response.headers.get('content-length'))
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    throw new Error(`response too large: ${declared} bytes`)
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) return ''
+
+  const chunks: Uint8Array[] = []
+  let total = 0
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      total += value.length
+      if (total > maxBytes) {
+        throw new Error(`response too large: exceeded ${maxBytes} bytes`)
+      }
+      chunks.push(value)
+    }
+  } finally {
+    reader.cancel().catch(() => {})
+  }
+
+  return new TextDecoder().decode(Buffer.concat(chunks))
+}
+
+/**
+ * Fetch a page, following redirects ourselves so every hop is re-validated.
+ *
+ * The platform's `redirect: 'follow'` defeated validateUrl() entirely: it only
+ * ever saw the URL the user typed, so an attacker-controlled host could 302 us
+ * to 169.254.169.254 (cloud metadata) or any other internal address, and the
+ * contents came back to the user through the AI extractor.
+ *
+ * Residual risk, deliberately not addressed here: DNS rebinding. validateUrl()
+ * resolves the hostname and fetch() resolves it again independently, so a
+ * hostile resolver can answer public-then-private across the two lookups.
+ * Closing that needs connect-to-pinned-IP with a Host override, which breaks
+ * TLS SNI and is disproportionate here. The redirect hole was the reachable one.
+ */
+export async function fetchSimple(url: string): Promise<string | null> {
   console.log('[fetch] Trying simple fetch for:', url)
   const controller = new AbortController()
+  // One deadline for the whole redirect chain, not per hop.
   const timeout = setTimeout(() => controller.abort(), 10000)
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9,he;q=0.8',
-        Referer: 'https://www.google.com/',
-        'Sec-Fetch-Site': 'cross-site',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Dest': 'document',
-      },
-      redirect: 'follow',
-    })
-    console.log('[fetch] Simple fetch status:', response.status)
-    if (response.status === 403 || response.status === 401) {
-      console.log('[fetch] Blocked by server, will try Jina Reader')
-      return null
+    let current = url
+
+    for (let hop = 0; ; hop++) {
+      // Re-validate on every hop, including the first: fetchSimple must be safe
+      // on its own terms, not only because parseRecipeUrl validated beforehand.
+      await validateUrl(current)
+
+      const response = await fetch(current, {
+        signal: controller.signal,
+        headers: BROWSER_HEADERS,
+        redirect: 'manual',
+      })
+
+      if (REDIRECT_STATUSES.has(response.status)) {
+        const location = response.headers.get('location')
+        response.body?.cancel().catch(() => {})
+
+        if (!location) {
+          console.log('[fetch] Redirect with no Location header, giving up')
+          return null
+        }
+        if (hop >= MAX_REDIRECTS) {
+          console.log('[fetch] Too many redirects, giving up')
+          return null
+        }
+
+        // Location may be relative; resolve against the URL just requested.
+        current = new URL(location, current).toString()
+        console.log('[fetch] Redirect', response.status, '->', current)
+        continue
+      }
+
+      console.log('[fetch] Simple fetch status:', response.status)
+      if (response.status === 403 || response.status === 401) {
+        console.log('[fetch] Blocked by server, will try Jina Reader')
+        return null
+      }
+
+      const html = await readTextCapped(response, MAX_HTML_BYTES)
+      console.log('[fetch] HTML length:', html.length)
+      if (html.length < 500) {
+        console.log('[fetch] HTML too short, will try Jina Reader')
+        return null
+      }
+      return html
     }
-    const html = await response.text()
-    console.log('[fetch] HTML length:', html.length)
-    if (html.length < 500) {
-      console.log('[fetch] HTML too short, will try Jina Reader')
-      return null
-    }
-    return html
   } catch (err) {
     console.error('[fetch] Simple fetch error:', err instanceof Error ? err.message : err)
     return null
