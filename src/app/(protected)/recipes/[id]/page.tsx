@@ -14,6 +14,7 @@ import { ExportButton } from '@/components/recipe/export-button'
 import { ShareButton } from '@/components/recipe/share-button'
 import { CoverImageUpload } from '@/components/recipe/cover-image-upload'
 import { SelfNotesSection } from '@/components/recipe/self-notes-section'
+import { KeepAwakeToggle } from '@/components/recipe/keep-awake-toggle'
 import { RECIPE_IMAGES_BUCKET } from '@/lib/constants/image'
 
 function formatDate(dateStr: string): string {
@@ -93,6 +94,7 @@ export default async function RecipeDetailPage({
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-[var(--font-display)]">{recipe.title}</h1>
           <div className="flex gap-2 items-center shrink-0">
+            <KeepAwakeToggle />
             {!isOwner && (
               <Badge variant="secondary">
                 {sharedByName ? `שותף ע״י ${sharedByName}` : 'משותף'}
