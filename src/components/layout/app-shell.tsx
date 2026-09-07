@@ -24,6 +24,7 @@ import { FamilyDialog } from '@/components/notebook/family-dialog'
 import { useNotebookShares } from '@/hooks/use-notebook-shares'
 import { useFamilyRelationships } from '@/hooks/use-family-relationships'
 import { useFeatureNotifications } from '@/hooks/use-feature-notifications'
+import { ShoppingLink } from '@/components/shopping/shopping-link'
 
 interface AppShellProps {
   user: User
@@ -54,8 +55,9 @@ export function AppShell({ user, children }: AppShellProps) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/recipes" className="text-xl font-[var(--font-display)] text-primary tracking-wide hover:opacity-80 transition-opacity">מחברת המתכונים</Link>
+          <Link href="/recipes" className="text-lg sm:text-xl min-w-0 truncate font-[var(--font-display)] text-primary tracking-wide hover:opacity-80 transition-opacity">מחברת המתכונים</Link>
           <div className="flex items-center gap-2">
+            <ShoppingLink />
             <Button
               variant="ghost"
               size="icon"
@@ -81,7 +83,7 @@ export function AppShell({ user, children }: AppShellProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1">
-                  {displayName}
+                  <span className="max-w-[22vw] md:max-w-48 truncate">{displayName}</span>
                   <ChevronDown className="size-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>

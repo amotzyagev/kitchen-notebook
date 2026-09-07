@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { RecipeForm } from '@/components/recipe/recipe-form'
@@ -18,7 +18,12 @@ export default function NewRecipePage() {
   const searchParams = useSearchParams()
   const { createRecipe, uploadRecipeImage, updateRecipe } = useRecipes()
   const [isLoading, setIsLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'link')
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get('tab')
+    return tab && ['link', 'text', 'photo', 'import'].includes(tab) ? tab : 'link'
+  })
+  const recipeIdRef = useRef<string | null>(null)
+  const savingRef = useRef(false)
 
   // Extracted data from AI
   const [extractedData, setExtractedData] = useState<AIRecipeExtraction | null>(null)
@@ -53,6 +58,9 @@ export default function NewRecipePage() {
         originalText?: string
       }
     ) => {
+      if (savingRef.current) return
+      savingRef.current = true
+      recipeIdRef.current ??= crypto.randomUUID()
       setIsLoading(true)
       try {
         // For image source type, we need to upload first then update with path
@@ -61,6 +69,7 @@ export default function NewRecipePage() {
           // Create recipe as 'manual' first to avoid CHECK constraint,
           // then upload image and update to 'image' with path
           const recipe = await createRecipe({
+            id: recipeIdRef.current,
             title: data.title,
             ingredients: data.ingredients,
             instructions: data.instructions,
@@ -73,6 +82,8 @@ export default function NewRecipePage() {
           // Upload image and update recipe
           const imagePath = await uploadRecipeImage(recipe.user_id, recipe.id, photoFile)
           await updateRecipe(recipe.id, {
+            ...data,
+            notes: data.notes || null,
             source_type: 'image',
             source_image_path: imagePath,
           })
@@ -80,6 +91,7 @@ export default function NewRecipePage() {
           router.push(`/recipes/${recipe.id}`)
         } else {
           const recipe = await createRecipe({
+            id: recipeIdRef.current,
             title: data.title,
             ingredients: data.ingredients,
             instructions: data.instructions,
@@ -97,6 +109,7 @@ export default function NewRecipePage() {
         console.error('Failed to save recipe:', errMsg, error)
         toast.error(`שגיאה בשמירת המתכון: ${errMsg}`)
       } finally {
+        savingRef.current = false
         setIsLoading(false)
       }
     },
@@ -121,7 +134,9 @@ export default function NewRecipePage() {
         defaultValue="link"
         value={activeTab}
         onValueChange={(val) => {
+          if (savingRef.current) return
           setActiveTab(val)
+          recipeIdRef.current = null
           // Reset extracted data when switching tabs
           setExtractedData(null)
           setSourceUrl(undefined)

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/layout/app-shell'
+import { ShoppingProvider } from '@/components/shopping/shopping-provider'
 
 export default async function ProtectedLayout({
   children,
@@ -14,5 +15,5 @@ export default async function ProtectedLayout({
     redirect('/login')
   }
 
-  return <AppShell user={user}>{children}</AppShell>
+  return <ShoppingProvider key={user.id}><AppShell user={user}>{children}</AppShell></ShoppingProvider>
 }

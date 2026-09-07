@@ -34,7 +34,7 @@ export function DeleteRecipeButton({ recipeId }: DeleteRecipeButtonProps) {
       router.push('/recipes')
     } catch (error) {
       console.error('Failed to delete recipe:', error)
-      toast.error('שגיאה במחיקת המתכון. אנא נסה שוב.')
+      toast.error(error instanceof Error ? error.message : 'שגיאה במחיקת המתכון. אנא נסה שוב.')
     } finally {
       setIsDeleting(false)
     }

@@ -3,6 +3,12 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      shopping_lists: {
+        Row: { user_id: string; version: number; document: Json; updated_at: string }
+        Insert: { user_id: string; version?: number; document?: Json; updated_at?: string }
+        Update: { version?: number; document?: Json; updated_at?: string }
+        Relationships: []
+      }
       recipes: {
         Row: {
           id: string

@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 block md:hidden">
@@ -66,10 +67,12 @@ export function BottomNav() {
 
           <button
             onClick={() => {
+              if (pathname !== '/recipes') {
+                router.push('/recipes?focus=search')
+                return
+              }
               window.scrollTo({ top: 0, behavior: 'smooth' })
-              setTimeout(() => {
-                document.querySelector<HTMLInputElement>('input[placeholder*="חיפוש"]')?.focus()
-              }, 300)
+              document.getElementById('recipe-search')?.focus()
             }}
             className={cn(
               'flex flex-col items-center justify-center min-w-[44px] min-h-[44px] p-2 text-xs transition-colors',

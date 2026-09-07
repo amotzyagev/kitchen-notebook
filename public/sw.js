@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kitchen-notebook-v2';
+const CACHE_NAME = 'kitchen-notebook-v3';
 
 const APP_SHELL = [
   '/',
@@ -35,6 +35,13 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests (Cache API doesn't support POST, etc.)
   if (request.method !== 'GET') return;
+
+  // Personal shopping data must never be served from a previous account's
+  // cache. Offline writes/reads are not supported by this feature.
+  if (url.pathname.startsWith('/shopping-list') || url.pathname.startsWith('/api/shopping-list')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Network-first for navigation and API calls
   if (request.mode === 'navigate' || url.pathname.startsWith('/api/')) {

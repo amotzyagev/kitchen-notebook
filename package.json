@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:shopping-ui": "playwright test --config tests/ui/playwright.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

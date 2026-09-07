@@ -13,6 +13,12 @@ export interface FeatureNotification {
  */
 export const FEATURE_NOTIFICATIONS: FeatureNotification[] = [
   {
+    id: 'shopping-list',
+    titleHe: 'רשימת קניות מהמתכונים שלכם',
+    bodyHe: 'בחרו מתכונים או מצרכים בודדים, אספו אותם לרשימה שנשמרת בחשבון, ושלחו ב-WhatsApp, בתפריט השיתוף או בהדפסה ושמירה כ-PDF. רשימת הקניות זמינה בכפתור הסל בראש המסך.',
+    date: '2026-09-06',
+  },
+  {
     id: 'family-sharing',
     titleHe: 'שיתוף משפחה',
     bodyHe: 'ניתן עכשיו לחבר בני משפחה לחשבון ולערוך מתכונים ביחד. לחץ על "משפחה" בתפריט המשתמש.',

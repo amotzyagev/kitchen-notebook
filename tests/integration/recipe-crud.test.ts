@@ -7,7 +7,8 @@ const mockSelect = vi.fn(() => ({ single: mockSingle }))
 const mockInsert = vi.fn(() => ({ select: mockSelect }))
 const mockUpdateEq = vi.fn(() => ({ select: mockSelect }))
 const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }))
-const mockDeleteEq = vi.fn()
+const mockDeleteResult = vi.fn()
+const mockDeleteEq = vi.fn(() => ({ select: mockDeleteResult }))
 const mockDelete = vi.fn(() => ({ eq: mockDeleteEq }))
 const mockSelectEq = vi.fn(() => ({ single: mockSingle }))
 const mockFrom = vi.fn((table: string) => {
@@ -41,6 +42,8 @@ import { useRecipes } from '@/hooks/use-recipes'
 describe('Recipe CRUD operations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRemove.mockResolvedValue({ error: null })
+    mockDeleteResult.mockResolvedValue({ data: [{ id: '123' }], error: null })
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'user-1' } },
       error: null,
@@ -48,6 +51,38 @@ describe('Recipe CRUD operations', () => {
   })
 
   describe('createRecipe', () => {
+    it('recovers an owned recipe when retrying an already committed ID', async () => {
+      const existing = { id: 'retry-id', user_id: 'user-1', title: 'Saved' }
+      mockSingle.mockResolvedValueOnce({ data: null, error: { code: '23505' } })
+        .mockResolvedValueOnce({ data: existing, error: null })
+      const result = await useRecipes().createRecipe({ id: 'retry-id', title: 'Saved', source_type: 'manual' })
+      expect(result).toEqual(existing)
+      expect(mockInsert).toHaveBeenCalledTimes(1)
+      expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('does not recover another user’s recipe on an ID collision', async () => {
+      mockSingle.mockResolvedValueOnce({ data: null, error: { code: '23505' } })
+        .mockResolvedValueOnce({ data: { id: 'collision', user_id: 'other' }, error: null })
+      await expect(useRecipes().createRecipe({ id: 'collision', title: 'Test', source_type: 'manual' }))
+        .rejects.toEqual({ code: '23505' })
+    })
+
+    it('keeps a slow insert pending instead of timing out and allowing a second save', async () => {
+      vi.useFakeTimers()
+      try {
+        let finish!: (value: unknown) => void
+        mockSingle.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+        const { createRecipe } = useRecipes()
+        const first = createRecipe({ title: 'Slow', source_type: 'manual' })
+        await vi.advanceTimersByTimeAsync(16000)
+        await expect(createRecipe({ title: 'Retry', source_type: 'manual' })).rejects.toThrow('שמירה כבר מתבצעת')
+        finish({ data: { id: 'slow' }, error: null })
+        await expect(first).resolves.toEqual({ id: 'slow' })
+      } finally {
+        vi.useRealTimers()
+      }
+    })
     it('inserts a recipe and returns it', async () => {
       const newRecipe = {
         title: 'Test Recipe',
@@ -102,7 +137,6 @@ describe('Recipe CRUD operations', () => {
   describe('deleteRecipe', () => {
     it('deletes a recipe without image', async () => {
       mockSingle.mockResolvedValue({ data: { source_image_path: null }, error: null })
-      mockDeleteEq.mockResolvedValue({ error: null })
 
       const { deleteRecipe } = useRecipes()
       await deleteRecipe('123')
@@ -113,7 +147,6 @@ describe('Recipe CRUD operations', () => {
 
     it('deletes image from storage when recipe has one', async () => {
       mockSingle.mockResolvedValue({ data: { source_image_path: 'path/to/img.jpg' }, error: null })
-      mockDeleteEq.mockResolvedValue({ error: null })
 
       const { deleteRecipe } = useRecipes()
       await deleteRecipe('123')
@@ -124,10 +157,37 @@ describe('Recipe CRUD operations', () => {
 
     it('throws on delete error', async () => {
       mockSingle.mockResolvedValue({ data: { source_image_path: null }, error: null })
-      mockDeleteEq.mockResolvedValue({ error: { message: 'Delete failed' } })
+      mockDeleteResult.mockResolvedValue({ error: { message: 'Delete failed' } })
 
       const { deleteRecipe } = useRecipes()
       await expect(deleteRecipe('123')).rejects.toEqual({ message: 'Delete failed' })
+      expect(mockRemove).not.toHaveBeenCalled()
+    })
+
+    it('cleans up both image types only after confirmed deletion', async () => {
+      mockSingle.mockResolvedValue({ data: { source_image_path: 'source.jpg', cover_image_path: 'cover.jpg' }, error: null })
+      await useRecipes().deleteRecipe('both')
+      expect(mockRemove).toHaveBeenCalledWith(['source.jpg', 'cover.jpg'])
+      expect(mockDeleteResult.mock.invocationCallOrder[0]).toBeLessThan(mockRemove.mock.invocationCallOrder[0])
+    })
+
+    it('does not delete images if RLS prevents deleting the row', async () => {
+      mockSingle.mockResolvedValue({ data: { cover_image_path: 'cover.jpg' }, error: null })
+      mockDeleteResult.mockResolvedValue({ data: [], error: null })
+      await expect(useRecipes().deleteRecipe('forbidden')).rejects.toThrow('המתכון לא נמחק')
+      expect(mockRemove).not.toHaveBeenCalled()
+    })
+
+    it('retries transient storage errors and retains paths for a later retry', async () => {
+      mockSingle.mockResolvedValue({ data: { cover_image_path: 'cover.jpg' }, error: null })
+      mockRemove.mockResolvedValue({ error: { message: 'offline' } })
+      const { deleteRecipe } = useRecipes()
+      await expect(deleteRecipe('cleanup-retry')).rejects.toThrow('ניקוי התמונות נכשל')
+      expect(mockRemove).toHaveBeenCalledTimes(3)
+      mockRemove.mockResolvedValue({ error: null })
+      await deleteRecipe('cleanup-retry')
+      expect(mockDelete).toHaveBeenCalledTimes(1)
+      expect(mockRemove).toHaveBeenLastCalledWith(['cover.jpg'])
     })
   })
 

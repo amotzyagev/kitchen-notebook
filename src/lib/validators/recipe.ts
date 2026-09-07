@@ -5,8 +5,8 @@ export const sourceTypeSchema = z.enum(['manual', 'link', 'image', 'import']);
 // Form validation (user input)
 export const recipeFormSchema = z.object({
   title: z.string().min(1, 'כותרת נדרשת').max(500, 'כותרת ארוכה מדי'),
-  ingredients: z.array(z.string().min(1).max(1000)).max(200).min(1, 'נדרש לפחות מרכיב אחד'),
-  instructions: z.array(z.string().min(1).max(5000)).max(100).min(1, 'נדרש לפחות שלב אחד'),
+  ingredients: z.array(z.string().trim().min(1, 'יש להזין מרכיב או להסיר את השורה').max(1000, 'המרכיב ארוך מדי')).max(200).min(1, 'נדרש לפחות מרכיב אחד'),
+  instructions: z.array(z.string().trim().min(1, 'יש להזין הוראה או להסיר את השלב').max(5000, 'ההוראה ארוכה מדי')).max(100).min(1, 'נדרש לפחות שלב אחד'),
   notes: z.string().max(10000).optional(),
   tags: z.array(z.string().max(100)).max(30).default([]),
 });

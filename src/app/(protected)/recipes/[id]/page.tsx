@@ -121,7 +121,7 @@ export default async function RecipeDetailPage({
       <Separator />
 
       {/* Ingredients */}
-      <RecipeMultiplierSection ingredients={recipe.ingredients} />
+      <RecipeMultiplierSection ingredients={recipe.ingredients} recipeId={recipe.id} title={recipe.title} revision={recipe.updated_at} />
 
       <Separator />
 
@@ -170,7 +170,7 @@ export default async function RecipeDetailPage({
             <Button variant="outline" size="sm">מתכון מקורי</Button>
           </a>
         )}
-        <ShareButton recipeIds={[recipe.id]} />
+        {isOwner && <ShareButton recipeIds={[recipe.id]} />}
         <ExportButton recipeIds={[recipe.id]} />
       </div>
       {canEdit && (

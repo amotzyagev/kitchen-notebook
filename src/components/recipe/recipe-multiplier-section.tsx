@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { IngredientList } from '@/components/recipe/ingredient-list'
 import { scaleIngredient } from '@/lib/utils/scale-ingredient'
+import { AddToShopping } from '@/components/shopping/add-to-shopping'
 
 const PRESETS = [
   { label: '¼', value: 0.25 },
@@ -18,9 +19,12 @@ const PRESETS = [
 
 interface RecipeMultiplierSectionProps {
   ingredients: string[]
+  recipeId: string
+  title: string
+  revision: string
 }
 
-export function RecipeMultiplierSection({ ingredients }: RecipeMultiplierSectionProps) {
+export function RecipeMultiplierSection({ ingredients, recipeId, title, revision }: RecipeMultiplierSectionProps) {
   const [multiplier, setMultiplier] = useState(1)
   const [customInput, setCustomInput] = useState('')
 
@@ -30,11 +34,11 @@ export function RecipeMultiplierSection({ ingredients }: RecipeMultiplierSection
     const fractionMatch = trimmed.match(/^(\d+)\/(\d+)$/)
     if (fractionMatch) {
       const val = parseInt(fractionMatch[1]) / parseInt(fractionMatch[2])
-      if (val > 0) setMultiplier(val)
+      if (Number.isFinite(val) && val >= 0.01 && val <= 100) setMultiplier(val)
       return
     }
     const val = parseFloat(trimmed)
-    if (!isNaN(val) && val > 0) setMultiplier(val)
+    if (Number.isFinite(val) && val >= 0.01 && val <= 100) setMultiplier(val)
   }
 
   const scaledIngredients = ingredients.map((i) => scaleIngredient(i, multiplier))
@@ -76,6 +80,7 @@ export function RecipeMultiplierSection({ ingredients }: RecipeMultiplierSection
         </div>
       </div>
       <IngredientList ingredients={scaledIngredients} showCheckboxes />
+      <AddToShopping recipes={[{ id: recipeId, title, ingredients, updated_at: revision }]} multiplier={multiplier} individual />
     </section>
   )
 }

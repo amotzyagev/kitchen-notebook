@@ -24,7 +24,7 @@ export function ShareDialog({ recipeIds, open, onOpenChange }: ShareDialogProps)
   const [isSharing, setIsSharing] = useState(false)
 
   async function handleShare() {
-    if (!email.trim()) return
+    if (!email.trim() || isSharing || !recipeIds.length) return
 
     setIsSharing(true)
     try {
@@ -42,7 +42,8 @@ export function ShareDialog({ recipeIds, open, onOpenChange }: ShareDialogProps)
       }
 
       if (data.shared === 0) {
-        toast.info('השיתוף בוצע בהצלחה')
+        toast.info('לא ניתן לאשר שהמתכונים שותפו. בדקו את הפרטים ונסו שוב.')
+        return
       } else {
         toast.success(`שותפו ${data.shared} מתכונים בהצלחה`)
       }

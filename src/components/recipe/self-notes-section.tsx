@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, StickyNote, Copy } from 'lucide-react'
 import { toast } from 'sonner'
@@ -84,6 +84,7 @@ export function SelfNotesSection({ recipeId, isOwner, recipe }: SelfNotesSection
   const [showNotes, setShowNotes] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
+  const duplicateIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     fetchNote()
@@ -114,9 +115,11 @@ export function SelfNotesSection({ recipeId, isOwner, recipe }: SelfNotesSection
 
   // Shared recipe, no notes yet — show choice dialog
   async function handleDuplicate() {
+    duplicateIdRef.current ??= crypto.randomUUID()
     setDuplicating(true)
     try {
       const newRecipe = await createRecipe({
+        id: duplicateIdRef.current,
         title: recipe.title,
         ingredients: recipe.ingredients,
         instructions: recipe.instructions,

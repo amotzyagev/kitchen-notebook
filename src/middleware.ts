@@ -50,6 +50,8 @@ export async function middleware(request: NextRequest) {
   // /api/auth and /auth/callback are deliberately absent: the profile-repair
   // call below targets /api/auth/on-signup and would otherwise deadlock.
   const PROTECTED_PREFIXES = [
+    '/shopping-list',
+    '/api/shopping-list',
     '/recipes',
     '/settings',
     '/api/recipes',

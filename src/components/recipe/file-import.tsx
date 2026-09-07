@@ -11,6 +11,7 @@ import type { AIRecipeExtraction } from '@/lib/validators/ai-response'
 type FileStatus = 'pending' | 'processing' | 'success' | 'failed'
 
 interface FileEntry {
+  recipeId: string
   file: File
   status: FileStatus
   error?: string
@@ -39,6 +40,7 @@ export function FileImport() {
     const selected = e.target.files
     if (!selected) return
     const entries: FileEntry[] = Array.from(selected).map(file => ({
+      recipeId: crypto.randomUUID(),
       file,
       status: 'pending' as const,
     }))
@@ -95,6 +97,7 @@ export function FileImport() {
         const extraction: AIRecipeExtraction = await response.json()
 
         await createRecipe({
+          id: files[i].recipeId,
           title: extraction.title,
           ingredients: extraction.ingredients,
           instructions: extraction.instructions,

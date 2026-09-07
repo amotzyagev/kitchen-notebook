@@ -6,6 +6,7 @@ type RecipeInsert = Database['public']['Tables']['recipes']['Insert']
 type RecipeRow = Database['public']['Tables']['recipes']['Row']
 
 let creating = false
+const pendingImageCleanup = new Map<string, string[]>()
 
 export function useRecipes() {
   const supabase = createClient()
@@ -23,20 +24,21 @@ export function useRecipes() {
       const insertData = { ...data, user_id: user.id }
       console.log('[createRecipe] inserting with user_id:', user.id, 'source_type:', insertData.source_type)
 
-      const insertPromise = supabase
+      const { data: recipe, error } = await supabase
         .from('recipes')
         .insert(insertData)
         .select()
         .single()
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('שמירת המתכון נכשלה - זמן המתנה עבר. נסה שוב.')), 15000)
-      )
-
-      const { data: recipe, error } = await Promise.race([insertPromise, timeoutPromise])
-
       console.log('[createRecipe] result:', recipe?.id, 'error:', error ? JSON.stringify(error) : 'none')
       if (error) {
+        // A previous attempt may have committed even if its response was lost.
+        // Only recover explicit IDs owned by this user; never overwrite a row.
+        if (error.code === '23505' && data.id) {
+          const { data: existing, error: readError } = await supabase
+            .from('recipes').select('*').eq('id', data.id).single()
+          if (!readError && existing?.user_id === user.id) return existing
+        }
         throw error
       }
       return recipe
@@ -71,26 +73,41 @@ export function useRecipes() {
   }
 
   async function deleteRecipe(id: string): Promise<void> {
-    // First get recipe to check for images
-    const { data: recipe } = await supabase
-      .from('recipes')
-      .select('source_image_path')
-      .eq('id', id)
-      .single()
+    let paths = pendingImageCleanup.get(id)
+    if (!paths) {
+      const { data: recipe, error: readError } = await supabase
+        .from('recipes')
+        .select('source_image_path, cover_image_path')
+        .eq('id', id)
+        .single()
+      if (readError) throw readError
 
-    // Delete image from storage if exists
-    if (recipe?.source_image_path) {
-      await supabase.storage
-        .from(RECIPE_IMAGES_BUCKET)
-        .remove([recipe.source_image_path])
+      const { data: deleted, error } = await supabase
+        .from('recipes')
+        .delete()
+        .eq('id', id)
+        .select('id')
+      if (error) throw error
+      if (!deleted?.length) throw new Error('המתכון לא נמחק. בדקו שיש לכם הרשאה למחוק אותו.')
+
+      // Keep images intact if deleting the recipe fails. Remember paths so
+      // the delete button can retry cleanup even after the row is gone.
+      paths = [...new Set([recipe?.source_image_path, recipe?.cover_image_path]
+        .filter((path): path is string => !!path))]
+      pendingImageCleanup.set(id, paths)
     }
-
-    // Delete recipe
-    const { error } = await supabase
-      .from('recipes')
-      .delete()
-      .eq('id', id)
-    if (error) throw error
+    if (paths.length) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { error: cleanupError } = await supabase.storage
+          .from(RECIPE_IMAGES_BUCKET).remove(paths)
+        if (!cleanupError) {
+          pendingImageCleanup.delete(id)
+          return
+        }
+        if (attempt === 2) throw new Error('המתכון נמחק, אך ניקוי התמונות נכשל. נסה שוב.')
+      }
+    }
+    pendingImageCleanup.delete(id)
   }
 
   return { createRecipe, uploadRecipeImage, updateRecipe, deleteRecipe }

@@ -3,6 +3,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/api-utils'
 import { rateLimit } from '@/lib/rate-limit'
 import { ERROR_RATE_LIMIT, ERROR_SERVER } from '@/lib/constants/error-messages'
+import { z } from 'zod'
+
+const shareSchema = z.object({
+  recipeIds: z.array(z.string().uuid()).min(1).max(100),
+  email: z.string().trim().email(),
+})
 
 export async function POST(request: Request) {
   try {
@@ -18,13 +24,25 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = await request.json()
-    const { recipeIds, email } = body as { recipeIds: string[]; email: string }
-
-    if (!recipeIds?.length || !email) {
+    const parsed = shareSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) {
       return NextResponse.json(
         { error: 'invalid_request', message: 'חסרים פרטים' },
         { status: 400 }
+      )
+    }
+    const { email } = parsed.data
+    const recipeIds = [...new Set(parsed.data.recipeIds)]
+
+    // Check ownership before looking up the recipient. Do not silently skip
+    // recipes the caller cannot share or report database failures as success.
+    const { data: ownedRecipes, error: ownershipError } = await supabase
+      .from('recipes').select('id').in('id', recipeIds).eq('user_id', user.id)
+    if (ownershipError) throw ownershipError
+    if (ownedRecipes?.length !== recipeIds.length) {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'ניתן לשתף רק מתכונים שבבעלותך' },
+        { status: 403 }
       )
     }
 
@@ -49,22 +67,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify ownership of all recipes
-    const { data: ownedRecipes } = await supabase
-      .from('recipes')
-      .select('id')
-      .in('id', recipeIds)
-      .eq('user_id', user.id)
-
-    const ownedIds = new Set(ownedRecipes?.map(r => r.id) ?? [])
-    const validRecipeIds = recipeIds.filter(id => ownedIds.has(id))
-
-    if (!validRecipeIds.length) {
-      return NextResponse.json({ success: true, shared: 0 })
-    }
-
     // Create shares (upsert to handle duplicates gracefully)
-    const shares = validRecipeIds.map(recipeId => ({
+    const shares = recipeIds.map(recipeId => ({
       recipe_id: recipeId,
       owner_id: user.id,
       shared_with_user_id: targetProfile.id,
@@ -82,7 +86,7 @@ export async function POST(request: Request) {
       )
     }
 
-    return NextResponse.json({ success: true, shared: validRecipeIds.length })
+    return NextResponse.json({ success: true, shared: recipeIds.length })
   } catch (error) {
     console.error('[share] Error:', error)
     return NextResponse.json(

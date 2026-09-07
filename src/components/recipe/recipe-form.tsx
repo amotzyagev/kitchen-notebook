@@ -150,14 +150,17 @@ export function RecipeForm({
           <FormLabel>מרכיבים</FormLabel>
           {ingredients.map((_, index) => (
             <div key={index} className="flex gap-2">
-              <Input
-                placeholder={`מרכיב ${index + 1}`}
-                value={ingredients[index]}
-                onChange={(e) => {
-                  const updated = [...ingredients]
-                  updated[index] = e.target.value
-                  form.setValue('ingredients', updated, { shouldValidate: false })
-                }}
+              <FormField
+                control={form.control}
+                name={`ingredients.${index}`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input aria-label={`מרכיב ${index + 1}`} placeholder={`מרכיב ${index + 1}`} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               {ingredients.length > 1 && (
                 <Button
@@ -196,15 +199,17 @@ export function RecipeForm({
               <span className="flex items-center justify-center size-8 rounded-full bg-muted text-sm font-medium shrink-0">
                 {index + 1}
               </span>
-              <Textarea
-                placeholder={`שלב ${index + 1}`}
-                rows={2}
-                value={instructions[index]}
-                onChange={(e) => {
-                  const updated = [...instructions]
-                  updated[index] = e.target.value
-                  form.setValue('instructions', updated, { shouldValidate: false })
-                }}
+              <FormField
+                control={form.control}
+                name={`instructions.${index}`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Textarea aria-label={`שלב ${index + 1}`} placeholder={`שלב ${index + 1}`} rows={2} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               {instructions.length > 1 && (
                 <Button

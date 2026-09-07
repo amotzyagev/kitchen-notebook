@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { RecipeCard } from './recipe-card'
+import { AddToShopping } from '@/components/shopping/add-to-shopping'
 import { ShareDialog } from './share-dialog'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
@@ -42,6 +43,16 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
   // Monotonic id for the in-flight search, so a slow earlier response
   // cannot overwrite the results of a later one.
   const searchIdRef = useRef(0)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const ownedSelectedIds = initialRecipes
+    .filter((recipe) => recipe.user_id === currentUserId && selectedIds.has(recipe.id))
+    .map((recipe) => recipe.id)
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('focus') === 'search') {
+      searchInputRef.current?.focus()
+    }
+  }, [])
 
   // Collect all distinct tags from initial recipes, sorted by popularity
   const allTags = useMemo(() => {
@@ -155,7 +166,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
             <FileText className="size-6 text-primary" />
             <span>טקסט חופשי</span>
           </Link>
-          <Link href="/recipes/new?tab=file" className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors">
+          <Link href="/recipes/new?tab=import" className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors">
             <Upload className="size-6 text-primary" />
             <span>ייבוא קובץ</span>
           </Link>
@@ -192,6 +203,8 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
       <div className="sticky top-14 z-30 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-sm">
         <div className="flex gap-2 items-center">
           <Input
+            id="recipe-search"
+            ref={searchInputRef}
             placeholder="חיפוש מתכונים..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -279,13 +292,16 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
 
       {/* Floating action bar for selection mode */}
       {selectionMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-2 bg-background border rounded-lg shadow-lg p-3">
+        <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap justify-center gap-2 bg-background border rounded-lg shadow-lg p-3 w-max max-w-[calc(100%-2rem)]">
+          <AddToShopping recipes={initialRecipes.filter(recipe => selectedIds.has(recipe.id))} />
           <Button
             size="sm"
             onClick={() => setShareDialogOpen(true)}
+            disabled={ownedSelectedIds.length === 0}
+            title="ניתן לשתף רק מתכונים שבבעלותך"
           >
             <Share2 className="size-4 me-2" />
-            שתף ({selectedIds.size})
+            שתף ({ownedSelectedIds.length})
           </Button>
           <Button
             variant="outline"
@@ -308,7 +324,7 @@ export function RecipeList({ initialRecipes, currentUserId }: RecipeListProps) {
 
       {/* Share dialog for multi-select */}
       <ShareDialog
-        recipeIds={Array.from(selectedIds)}
+        recipeIds={ownedSelectedIds}
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
       />
